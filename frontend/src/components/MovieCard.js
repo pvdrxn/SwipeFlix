@@ -1,12 +1,12 @@
 import React from "react";
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme";
 
 
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
-export function MovieCard({ movie, onPress, watched = false, showTitle = true }) {
+export function MovieCard({ movie, onPress, watched = false }) {
   const { width } = useWindowDimensions();
   const cardWidth = (width - 32) / 2 - 20;
 
@@ -18,6 +18,10 @@ export function MovieCard({ movie, onPress, watched = false, showTitle = true })
     ? Number(movie.vote_average).toFixed(1)
     : "N/A";
 
+  const year = movie.release_date
+    ? movie.release_date.slice(0, 4)
+    : null;
+
   return (
     <Pressable onPress={() => onPress?.(movie)} style={styles.container}>
       <View style={[styles.posterContainer, { width: cardWidth }]}>
@@ -28,20 +32,25 @@ export function MovieCard({ movie, onPress, watched = false, showTitle = true })
             <Text style={styles.placeholderText}>No Image</Text>
           </View>
         )}
-        <View style={styles.ratingBadge}>
-          <Text style={[styles.ratingText, { color: (movie.vote_average || 0) >= 8 ? colors.rating : colors.text.primary }]}>{rating}</Text>
-          {watched ? (
-            <Ionicons name="eye" size={16} color={colors.accent} style={{ marginLeft: 5 }} />
+        {watched ? (
+          <View style={styles.watchedBadge}>
+            <Feather name="eye" size={16} color={colors.accent} />
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.meta}>
+        <Text style={styles.title} numberOfLines={2}>{movie.title}</Text>
+        <View style={styles.metaRow}>
+          <Ionicons name="star" size={14} color={colors.accent} />
+              <Text style={[styles.ratingValue, (movie.vote_average || 0) >= 8 && { color: colors.accent }]}>{rating}</Text>
+          {year ? (
+            <>
+              <Text style={styles.bullet}>  •  </Text>
+              <Text style={styles.year}>{year}</Text>
+            </>
           ) : null}
         </View>
       </View>
-      {showTitle && (
-        <View style={[styles.overlay, { width: cardWidth, height: 36 }]}>
-          <Text style={styles.title} numberOfLines={2}>
-            {movie.title}
-          </Text>
-        </View>
-      )}
     </Pressable>
   );
 }
@@ -57,6 +66,8 @@ const styles = StyleSheet.create({
   },
   poster: {
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#444",
   },
   posterPlaceholder: {
     borderRadius: 4,
@@ -68,7 +79,7 @@ const styles = StyleSheet.create({
     color: colors.text.tertiary,
     fontSize: 12,
   },
-  ratingBadge: {
+  watchedBadge: {
     position: "absolute",
     bottom: 4,
     right: 4,
@@ -76,20 +87,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 2,
-    flexDirection: "row",
-    alignItems: "center",
   },
-  ratingText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  overlay: {
-    marginTop: 8,
+  meta: {
+    marginTop: 6,
+    gap: 2,
   },
   title: {
     color: colors.text.primary,
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "600",
     lineHeight: 18,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  ratingValue: {
+    color: colors.text.primary,
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 3,
+  },
+  bullet: {
+    color: colors.text.tertiary,
+    fontSize: 12,
+  },
+  year: {
+    color: colors.text.tertiary,
+    fontSize: 12,
   },
 });

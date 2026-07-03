@@ -27,12 +27,13 @@ function notifyWatchedListeners() {
   watchedListeners.forEach(cb => cb());
 }
 
-export async function addPick({ tmdbId, title, posterPath, rating, choice, notify = true }) {
+export async function addPick({ tmdbId, title, posterPath, rating, choice, is_saved, notify = true }) {
   const payload = {
     tmdb_id: tmdbId,
     title,
-    choice,
   };
+  if (choice != null) payload.choice = choice;
+  if (is_saved != null) payload.is_saved = is_saved;
   if (posterPath) {
     payload.poster_path = posterPath.startsWith("http") ? posterPath : `https://image.tmdb.org/t/p/w500${posterPath}`;
   }
@@ -46,9 +47,26 @@ export async function addPick({ tmdbId, title, posterPath, rating, choice, notif
   return data;
 }
 
-export async function getPicks(choice = null) {
-  const params = choice ? { choice } : {};
+export async function getPicks(filters = null) {
+  const params = {};
+  if (filters) {
+    if (filters.choice) params.choice = filters.choice;
+    if (filters.isSaved) params.is_saved = "true";
+  }
   const { data } = await http.get("/api/picks/", { params });
+  return data;
+}
+
+export async function toggleSave({ tmdbId, title, posterPath, rating }) {
+  const payload = { tmdb_id: tmdbId, title };
+  if (posterPath) {
+    payload.poster_path = posterPath.startsWith("http") ? posterPath : `https://image.tmdb.org/t/p/w500${posterPath}`;
+  }
+  if (rating != null && typeof rating === "number" && !isNaN(rating)) {
+    payload.rating = Math.round(rating * 10) / 10;
+  }
+  const { data } = await http.post("/api/picks/toggle_save/", payload);
+  notifyPickListeners();
   return data;
 }
 
@@ -68,5 +86,29 @@ export async function toggleWatched(id) {
 
 export async function getWatchedPicks() {
   const { data } = await http.get("/api/picks/watched/");
+  return data;
+}
+
+export async function clearLiked() {
+  const { data } = await http.post("/api/picks/clear_liked/");
+  notifyPickListeners();
+  return data;
+}
+
+export async function clearDisliked() {
+  const { data } = await http.post("/api/picks/clear_disliked/");
+  notifyPickListeners();
+  return data;
+}
+
+export async function clearSaved() {
+  const { data } = await http.post("/api/picks/clear_saved/");
+  notifyPickListeners();
+  return data;
+}
+
+export async function clearAll() {
+  const { data } = await http.post("/api/picks/clear_all/");
+  notifyPickListeners();
   return data;
 }

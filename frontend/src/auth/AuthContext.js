@@ -39,9 +39,18 @@ export function AuthProvider({ children }) {
 
   const signUp = useCallback(async ({ username, email, password }) => {
     await authApi.register({ username, email, password });
-    // Professional UX: after register, immediately log in.
-    await signIn({ username, password });
-  }, [signIn]);
+  }, []);
+
+  const verifyEmail = useCallback(async ({ email, code }) => {
+    const tokens = await authApi.verifyEmail({ email, code });
+    await setTokens({ accessToken: tokens.access, refreshToken: tokens.refresh });
+    setAccessToken(tokens.access);
+  }, []);
+
+  const setAuthTokens = useCallback(async ({ accessToken: at, refreshToken: rt }) => {
+    await setTokens({ accessToken: at, refreshToken: rt });
+    setAccessToken(at);
+  }, []);
 
   const signOut = useCallback(async () => {
     await clearTokens();
@@ -55,9 +64,11 @@ export function AuthProvider({ children }) {
       accessToken,
       signIn,
       signUp,
+      verifyEmail,
+      setAuthTokens,
       signOut,
     }),
-    [isBootstrapping, accessToken, signIn, signUp, signOut]
+    [isBootstrapping, accessToken, signIn, signUp, verifyEmail, setAuthTokens, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

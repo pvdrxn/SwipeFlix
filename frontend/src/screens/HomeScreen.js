@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Animated, Pressable, StyleSheet, Text, View, FlatList, ScrollView, RefreshControl, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { colors } from "../theme";
 import { MovieCard } from "../components/MovieCard";
 import {
@@ -188,6 +188,9 @@ export function HomeScreen() {
   };
 
   useEffect(() => {
+    const yearValid = (v) => !v || /^\d{4}$/.test(v);
+    const ratingValid = (v) => !v || /^\d(\.\d)?$/.test(v);
+    if (!yearValid(startYear) || !yearValid(endYear) || !ratingValid(minRating)) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       doSearch(query, selectedGenre, startYear, endYear, minRating);
@@ -204,7 +207,7 @@ export function HomeScreen() {
         <View style={styles.searchContainer}>
           <View style={styles.searchRow}>
             <View style={styles.searchBar}>
-              <Ionicons name="search" size={18} color={colors.text.tertiary} />
+              <Feather name="search" size={18} color={colors.accent} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search movies..."
@@ -214,12 +217,12 @@ export function HomeScreen() {
               />
               {query.length > 0 && (
                 <Pressable onPress={clearSearch} hitSlop={8}>
-                  <Ionicons name="close-circle" size={18} color={colors.text.tertiary} />
+                  <Feather name="x-circle" size={18} color={colors.text.tertiary} />
                 </Pressable>
               )}
             </View>
             <Pressable onPress={toggleFilters} style={styles.filterToggle}>
-              <Ionicons name={showFilters ? "options" : "options-outline"} size={24} color={colors.accent} />
+              <Feather name="sliders" size={24} color={colors.accent} />
             </Pressable>
           </View>
           <Animated.View style={[{ height: filterAnim, overflow: 'hidden' }]}>
@@ -242,41 +245,48 @@ export function HomeScreen() {
             </ScrollView>
           )}
           <View style={styles.filterInputsRow}>
-              <TextInput
-                style={styles.filterInput}
-                placeholder="From"
-                placeholderTextColor={colors.text.muted}
-                value={startYear}
-                onChangeText={(v) => setStartYear(v.replace(/[^0-9]/g, ""))}
-                keyboardType="number-pad"
-                maxLength={4}
-              />
-              <Text style={styles.filterInputSep}>-</Text>
-              <TextInput
-                style={styles.filterInput}
-                placeholder="To"
-                placeholderTextColor={colors.text.muted}
-                value={endYear}
-                onChangeText={(v) => setEndYear(v.replace(/[^0-9]/g, ""))}
-                keyboardType="number-pad"
-                maxLength={4}
-              />
-              <Text style={styles.filterInputSep}>|</Text>
-              <TextInput
-                style={[styles.filterInput, { width: 70 }]}
-                placeholder="Rating"
-                placeholderTextColor={colors.text.muted}
-                value={minRating}
-                onChangeText={(v) => setMinRating(v.replace(/[^0-9.]/g, ""))}
-                keyboardType="decimal-pad"
-                maxLength={3}
-              />
+              <View style={styles.filterInputGroup}>
+                <Feather name="calendar" size={14} color={colors.accent} />
+                <TextInput
+                  style={styles.filterInput}
+                  placeholder="From"
+                  placeholderTextColor={colors.text.muted}
+                  value={startYear}
+                  onChangeText={(v) => setStartYear(v.replace(/[^0-9]/g, ""))}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
+              </View>
+              <View style={styles.filterInputGroup}>
+                <Feather name="calendar" size={14} color={colors.accent} />
+                <TextInput
+                  style={styles.filterInput}
+                  placeholder="To"
+                  placeholderTextColor={colors.text.muted}
+                  value={endYear}
+                  onChangeText={(v) => setEndYear(v.replace(/[^0-9]/g, ""))}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
+              </View>
+              <View style={styles.filterInputGroup}>
+                <Feather name="star" size={14} color={colors.accent} />
+                <TextInput
+                  style={styles.filterInput}
+                  placeholder="Rating"
+                  placeholderTextColor={colors.text.muted}
+                  value={minRating}
+                  onChangeText={(v) => setMinRating(v.replace(/[^0-9.]/g, ""))}
+                  keyboardType="decimal-pad"
+                  maxLength={3}
+                />
+              </View>
             </View>
           </Animated.View>
           </Animated.View>
         </View>
 
-        {query.length > 0 || selectedGenre ? (
+        {query.length > 0 || selectedGenre || startYear || endYear || minRating ? (
           <FlatList
             data={searchResults}
             numColumns={numColumns}
@@ -317,14 +327,17 @@ export function HomeScreen() {
           >
             {CATEGORIES.map((category) => (
               <View key={category.key} style={styles.section}>
-                <Text style={styles.sectionTitle}>{category.title}</Text>
+                <View style={styles.sectionTitleRow}>
+                  <View style={styles.sectionTitleBar} />
+                  <Text style={styles.sectionTitle}>{category.title}</Text>
+                </View>
                 <FlatList
                   data={categoryData[category.key] || []}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   keyExtractor={(item) => item.id.toString()}
                   renderItem={({ item }) => (
-                    <MovieCard movie={item} showTitle={false} watched={watchedIds.has(Number(item.id))} onPress={(movie) => navigation.navigate("MovieDetails", { movieId: movie.id, initialMovieData: movie })} />
+                    <MovieCard movie={item} watched={watchedIds.has(Number(item.id))} onPress={(movie) => navigation.navigate("MovieDetails", { movieId: movie.id, initialMovieData: movie })} />
                   )}
                   contentContainerStyle={styles.sectionList}
                 />
@@ -407,21 +420,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
     paddingHorizontal: 12,
+    gap: 6,
   },
-  filterInput: {
+  filterInputGroup: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.07)",
     borderRadius: 8,
-    paddingHorizontal: 12,
+    flex: 1,
     height: 42,
-    width: 72,
-    color: colors.text.primary,
-    fontSize: 15,
-    textAlign: "center",
+    paddingHorizontal: 8,
   },
-  filterInputSep: {
-    color: colors.accent,
-    fontSize: 16,
-    marginHorizontal: 8,
+  filterInput: {
+    flex: 1,
+    color: colors.text.primary,
+    fontSize: 14,
+    padding: 0,
+    paddingLeft: 4,
+    textAlign: "center",
   },
   content: { flex: 1, justifyContent: "center", alignItems: "center" },
   loadingText: { color: colors.text.tertiary, fontSize: 32, marginBottom: 8 },
@@ -431,7 +447,20 @@ const styles = StyleSheet.create({
   retryText: { color: colors.text.primary, fontSize: 16, fontWeight: "600" },
   scrollContent: { paddingTop: 8, paddingBottom: 100 },
   section: { marginBottom: 24 },
-  sectionTitle: { color: colors.text.primary, fontSize: 18, fontWeight: "700", paddingHorizontal: 12, marginBottom: 12 },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingHorizontal: 12,
+  },
+  sectionTitleBar: {
+    width: 4,
+    height: 18,
+    borderRadius: 2,
+    backgroundColor: colors.accent,
+    marginRight: 8,
+  },
+  sectionTitle: { color: colors.text.primary, fontSize: 18, fontWeight: "700" },
   sectionList: { paddingHorizontal: 6 },
   searchResultsContent: { paddingTop: 8, paddingHorizontal: 4 },
   movieItem: { padding: 4 },

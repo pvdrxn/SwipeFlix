@@ -29,7 +29,7 @@ export function LibraryScreen() {
   const fetchMovies = useCallback(async () => {
     try {
       const [[likedData, passData, savedData], watchedData] = await Promise.all([
-        Promise.all([getPicks("liked"), getPicks("pass"), getPicks("saved")]),
+        Promise.all([getPicks({ choice: "liked" }), getPicks({ choice: "pass" }), getPicks({ isSaved: true })]),
         getWatchedPicks()
       ]);
       setCounts({ liked: likedData.length, pass: passData.length, saved: savedData.length });

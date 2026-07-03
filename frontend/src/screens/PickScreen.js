@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, Pressable, ScrollView, Animated, PanResponder } from "react-native";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchPopularMovies, fetchGenres, fetchMovieCredits, fetchMovieDetails } from "../services/tmdb";
 import { addPick, getPicks, subscribePicks } from "../api/picksApi";
@@ -222,15 +223,15 @@ export function PickScreen() {
     const movie = moviesSnapshotRef.current[swipedIndex];
     if (!movie) return;
 
-    const choice = direction === "right" ? "liked" : direction === "up" ? "saved" : "pass";
-
     try {
       await addPick({
         tmdbId: movie.id,
         title: movie.title,
         posterPath: movie.poster_path,
         rating: movie.vote_average ?? undefined,
-        choice,
+        ...(direction === "right" ? { choice: "liked" } : {}),
+        ...(direction === "up" ? { is_saved: true } : {}),
+        ...(direction === "left" ? { choice: "pass" } : {}),
       });
     } catch (err) {
       console.warn("Failed to save pick:", err);
@@ -391,7 +392,7 @@ export function PickScreen() {
               {movie.title}
             </Text>
             <Text style={styles.cardYear}>
-              {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` - ${runtimes[movie.id]} min` : ""}
+              {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` • ${runtimes[movie.id]} min` : ""}
             </Text>
           </View>
           <View style={styles.cardGenres}>
@@ -406,12 +407,12 @@ export function PickScreen() {
               </React.Fragment>
             ))}
           </View>
-          <Text style={[
-            styles.cardRating,
-            { color: (movie.vote_average || 0) >= 8 ? colors.rating : colors.text.primary }
-          ]}>
-            ★ {(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : "N/A"}
-          </Text>
+          <View style={styles.cardRatingRow}>
+            <Ionicons name="star" size={22} color={colors.accent} />
+            <Text style={styles.cardRating}>
+              {(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : "N/A"}
+            </Text>
+          </View>
         </LinearGradient>
       </Pressable>
     );
@@ -658,12 +659,18 @@ const styles = StyleSheet.create({
     top: -5,
     left: -3,
   },
-  cardRating: {
-    fontSize: 26,
-    fontWeight: "600",
+  cardRatingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     marginTop: 4,
     top: -10,
     alignSelf: "flex-end",
+  },
+  cardRating: {
+    fontSize: 26,
+    fontWeight: "600",
+    color: colors.accent,
   },
   doneOverlay: {
     ...StyleSheet.absoluteFillObject,
