@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { AuthContext } from "../auth/AuthContext";
+import { LanguageContext } from "../context/LanguageContext";
 import { LoginScreen } from "../screens/LoginScreen";
 import { RegisterScreen } from "../screens/RegisterScreen";
 import { HomeScreen } from "../screens/HomeScreen";
@@ -237,6 +238,7 @@ function AppStack() {
 
 export function RootNavigator() {
   const { isBootstrapping, isSignedIn } = useContext(AuthContext);
+  const { t } = useContext(LanguageContext);
 
   if (isBootstrapping) return <Splash />;
 
@@ -249,8 +251,8 @@ export function RootNavigator() {
           initialRouteName="Login"
           screenOptions={{ headerStyle: { backgroundColor: colors.bg.primary }, headerTintColor: colors.text.primary }}
         >
-          <AuthStack.Screen name="Login" component={LoginScreen} options={{ title: "Log in" }} />
-          <AuthStack.Screen name="Register" component={RegisterScreen} options={{ title: "Register" }} />
+          <AuthStack.Screen name="Login" component={LoginScreen} options={{ title: t("auth.logIn") }} />
+          <AuthStack.Screen name="Register" component={RegisterScreen} options={{ title: t("auth.register") }} />
         </AuthStack.Navigator>
       )}
     </NavigationContainer>

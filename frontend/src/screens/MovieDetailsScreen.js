@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { View, Text, Image, StyleSheet, ScrollView, Pressable, Dimensions, Animated } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -6,11 +6,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { fetchMovieDetails, fetchMovieCredits, fetchMovieWatchProviders, fetchMovieTrailer, fetchMovieReleaseDates } from "../services/tmdb";
 import { addPick, deletePick, getPicks, subscribePicks, subscribeWatched, getWatchedPicks, toggleWatched, toggleSave, toggleFavorite, getFavorites, subscribeFavorites } from "../api/picksApi";
 import { colors } from "../theme";
+import { LanguageContext } from "../context/LanguageContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export function MovieDetailsScreen({ route, navigation }) {
   const { movieId, initialMovieData } = route.params;
+  const { t } = useContext(LanguageContext);
   const [movie, setMovie] = useState(initialMovieData || null);
   const [credits, setCredits] = useState(null);
   const [watchProviders, setWatchProviders] = useState(null);
@@ -294,11 +296,11 @@ export function MovieDetailsScreen({ route, navigation }) {
     <View style={styles.container}>
       {loading ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={styles.loadingText}>{t("details.loading")}</Text>
         </View>
       ) : !movie ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>Error: {error}</Text>
+          <Text style={styles.errorText}>{t("details.error")}{error}</Text>
         </View>
       ) : (
         <>
@@ -348,7 +350,7 @@ export function MovieDetailsScreen({ route, navigation }) {
             <View style={styles.ratingRow}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <Ionicons name="star" size={18} color={colors.accent} />
-                <Text style={styles.rating}>{(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : "N/A"}</Text>
+                <Text style={styles.rating}>{(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : t("details.na")}</Text>
               </View>
               {(() => {
                 const ratings = getRatings();
@@ -365,18 +367,18 @@ export function MovieDetailsScreen({ route, navigation }) {
               })()}
             </View>
             <Text style={styles.meta}>
-              {movie.release_date?.split("-")[0] || "N/A"} • {movie.runtime ?? "—"} min
+              {movie.release_date?.split("-")[0] || t("details.na")} • {movie.runtime ?? "—"} {t("details.min")}
             </Text>
             {(() => {
               const director = credits?.crew?.find((person) => person.job === "Director");
               if (!director) return null;
-              return <Text style={styles.metaDir}>Dir. {director.name}</Text>;
+              return <Text style={styles.metaDir}>{t("details.dir")} {director.name}</Text>;
             })()}
             <View style={styles.genresRow}>
               {(movie.genres || []).map((g, i) => (
                 <React.Fragment key={g.id}>
                   {i > 0 && <Text style={styles.genreSeparator}> · </Text>}
-                  <Text style={[styles.genreText, { color: colors.genre[g.name] || colors.text.tertiary }]}>{g.name}</Text>
+                  <Text style={[styles.genreText, { color: colors.genreById[g.id] || colors.text.tertiary }]}>{g.name}</Text>
                 </React.Fragment>
               ))}
             </View>
@@ -391,12 +393,12 @@ export function MovieDetailsScreen({ route, navigation }) {
 
         <View style={[styles.section, { paddingTop: 0 }]}>
           <Text style={styles.synopsis}>
-            {movie.overview || "No synopsis available."}
+            {movie.overview || t("details.noSynopsis")}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { textAlign: "center" }]}>Cast</Text>
+          <Text style={[styles.sectionTitle, { textAlign: "center" }]}>{t("details.cast")}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.castScroll}>
             {(credits?.cast?.slice(0, 10) || []).map((actor) => (
               <View key={actor.id} style={styles.castItem}>
@@ -430,7 +432,7 @@ export function MovieDetailsScreen({ route, navigation }) {
             if (providers.length === 0) return null;
             return (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Where to Watch</Text>
+                <Text style={styles.sectionTitle}>{t("details.whereToWatch")}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.providerScroll}>
                   {providers.map((provider) => (
                     <View key={provider.provider_id} style={styles.providerItem}>

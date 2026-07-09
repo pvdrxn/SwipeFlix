@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, Image, StyleSheet, Dimensions, Pressable, ScrollView, Animated, PanResponder } from "react-native";
+import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
+import { View, Text, Image, StyleSheet, Dimensions, Pressable, ScrollView, Animated, PanResponder, Modal } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchPopularMovies, fetchGenres, fetchMovieCredits, fetchMovieDetails } from "../services/tmdb";
 import { addPick, getPicks, subscribePicks, toggleFavorite } from "../api/picksApi";
 import { colors } from "../theme";
+import { LanguageContext } from "../context/LanguageContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -14,11 +15,13 @@ const CARD_WIDTH = SCREEN_WIDTH - 48;
 const CARD_HEIGHT = CARD_WIDTH * 1.5;
 
 export function PickScreen() {
+  const { language, t } = useContext(LanguageContext);
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [savedCount, setSavedCount] = useState(0);
   const [passCount, setPassCount] = useState(0);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
   const pageRef = useRef(1);
   const [cardIndex, setCardIndex] = useState(0);
   const cardIndexRef = useRef(0);
@@ -147,6 +150,30 @@ export function PickScreen() {
     }
     bootstrap();
   }, []);
+
+  useEffect(() => {
+    fetchGenres().then((data) => {
+      const map = {};
+      (data.genres || []).forEach(g => { map[g.id] = g.name; });
+      setGenreMap(map);
+    }).catch(() => {});
+    if (movies.length > 0) {
+      Promise.allSettled(
+        movies.map(m => fetchMovieDetails(m.id).then(d => ({ id: m.id, title: d.title, overview: d.overview })))
+      ).then(results => {
+        const overviewMap = {};
+        results.forEach(r => {
+          if (r.status === "fulfilled") {
+            overviewMap[r.value.id] = { title: r.value.title, overview: r.value.overview };
+          }
+        });
+        setMovies(prev => prev.map(m => {
+          const updated = overviewMap[m.id];
+          return updated ? { ...m, title: updated.title, overview: updated.overview } : m;
+        }));
+      });
+    }
+  }, [language]);
 
   useEffect(() => {
     const unsub = subscribePicks(async () => {
@@ -503,7 +530,7 @@ export function PickScreen() {
             />
           ) : (
             <View style={[styles.cardImage, styles.cardPlaceholder]}>
-              <Text style={styles.placeholderText}>No Image</Text>
+              <Text style={styles.placeholderText}>{t("pick.noImage")}</Text>
             </View>
           )}
           <LinearGradient
@@ -516,14 +543,14 @@ export function PickScreen() {
                 {movie.title}
               </Text>
               <Text style={styles.cardYear}>
-                {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` • ${runtimes[movie.id]} min` : ""}
+                {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` • ${runtimes[movie.id]} ${t("details.min")}` : ""}
               </Text>
             </View>
             <View style={styles.cardGenres}>
-              {(movie.genre_ids || []).map(id => genreMap[id]).filter(Boolean).map((name, i, arr) => (
-                <React.Fragment key={name}>
-                  <Text style={{ color: colors.genre[name] || colors.text.primary, fontSize: 16, fontWeight: "700" }}>
-                    {name}
+              {(movie.genre_ids || []).map(id => ({ id, name: genreMap[id] })).filter(g => g.name).map((g, i, arr) => (
+                <React.Fragment key={g.id}>
+                  <Text style={{ color: colors.genreById[g.id] || colors.text.primary, fontSize: 16, fontWeight: "700" }}>
+                    {g.name}
                   </Text>
                   {i < arr.length - 1 && (
                     <Text style={{ color: colors.text.primary, fontSize: 16 }}> · </Text>
@@ -534,7 +561,7 @@ export function PickScreen() {
             <View style={styles.cardRatingRow}>
               <Ionicons name="star" size={22} color={colors.accent} />
               <Text style={styles.cardRating}>
-                {(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : "N/A"}
+                {(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : t("details.na")}
               </Text>
             </View>
           </LinearGradient>
@@ -548,7 +575,7 @@ export function PickScreen() {
   if (loading && movies.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading movies...</Text>
+        <Text style={styles.loadingText}>{t("pick.loading")}</Text>
       </View>
     );
   }
@@ -556,7 +583,7 @@ export function PickScreen() {
   if (error) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Error: {error}</Text>
+        <Text style={styles.errorText}>{t("pick.error")}{error}</Text>
       </View>
     );
   }
@@ -581,10 +608,12 @@ export function PickScreen() {
       <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.saved, opacity: upOverlayOpacity }]} />
       <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.favorite, opacity: Animated.multiply(borderAnim, 0.7) }]} />
       <View style={{ alignItems: "center", paddingBottom: 120 }}>
-      <Text style={[styles.subtitle, { marginTop: 30 }]}>
-        <Text style={{ color: colors.swipe.pass }}>Left to dislike</Text> · <Text style={{ color: colors.swipe.saved }}>Up to watch later</Text> · <Text style={{ color: colors.swipe.save }}>Right to like</Text>
-      </Text>
-      <Text style={{ fontSize: 13, marginTop: -20 }}><Text style={{ color: colors.text.primary }}>tap for synopsis</Text><Text style={{ color: colors.text.primary }}> · </Text><Text style={{ color: colors.favorite }}>double tap to favorite</Text></Text>
+      <Pressable
+        style={styles.infoButton}
+        onPress={() => setInfoModalVisible(true)}
+      >
+        <Feather name="info" size={32} color={colors.accent} />
+      </Pressable>
 
       {movies.length > 0 && (
         <Animated.View
@@ -637,7 +666,7 @@ export function PickScreen() {
             overflow: "hidden",
             backgroundColor: "transparent",
             alignSelf: "center",
-            transform: [{ translateY: -155 }],
+            transform: [{ translateY: -135 }],
           }}
         >
           <Text style={styles.synopsisText} numberOfLines={8} adjustsFontSizeToFit minimumFontScale={0.7}>{topCard.overview}</Text>
@@ -657,11 +686,44 @@ export function PickScreen() {
       </Animated.View>
 
       </View>
+      <Modal
+        visible={infoModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setInfoModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setInfoModalVisible(false)}>
+          <View style={styles.infoModalContent}>
+            <Text style={styles.infoModalTitle}>{t("pick.swipeInstructions")}</Text>
+            <View style={styles.infoModalRow}>
+              <Feather name="arrow-left" size={18} color={colors.swipe.pass} />
+              <Text style={{ color: colors.swipe.pass, fontSize: 16, fontWeight: "600" }}>{t("pick.leftToDislike")}</Text>
+            </View>
+            <View style={styles.infoModalRow}>
+              <Feather name="arrow-up" size={18} color={colors.swipe.saved} />
+              <Text style={{ color: colors.swipe.saved, fontSize: 16, fontWeight: "600" }}>{t("pick.upToWatchLater")}</Text>
+            </View>
+            <View style={styles.infoModalRow}>
+              <Feather name="arrow-right" size={18} color={colors.swipe.save} />
+              <Text style={{ color: colors.swipe.save, fontSize: 16, fontWeight: "600" }}>{t("pick.rightToLike")}</Text>
+            </View>
+            <View style={styles.infoDivider} />
+            <View style={styles.infoModalRow}>
+              <Feather name="file-text" size={18} color={colors.text.primary} />
+              <Text style={{ color: colors.text.primary, fontSize: 16 }}>{t("pick.tapForSynopsis")}</Text>
+            </View>
+            <View style={styles.infoModalRow}>
+              <Feather name="star" size={18} color={colors.favorite} />
+              <Text style={{ color: colors.favorite, fontSize: 16 }}>{t("pick.doubleTapToFavorite")}</Text>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
       {noMoreMovies && movies.length > 0 && (
         <View style={styles.doneOverlay}>
-          <Text style={styles.doneText}>No more movies!</Text>
+          <Text style={styles.doneText}>{t("pick.noMore")}</Text>
           <Text style={styles.pickedCount}>
-            Saved: {savedCount} · Pass: {passCount}
+            {t("pick.savedCount", { saved: savedCount, pass: passCount })}
           </Text>
           <Pressable
             onPress={() => {
@@ -676,7 +738,7 @@ export function PickScreen() {
             }}
             style={styles.resetButton}
           >
-            <Text style={styles.resetText}>Start Over</Text>
+            <Text style={styles.resetText}>{t("pick.startOver")}</Text>
           </Pressable>
         </View>
       )}
@@ -725,7 +787,7 @@ const styles = StyleSheet.create({
     height: CARD_HEIGHT + 40,
     width: SCREEN_WIDTH,
     alignItems: "center",
-    marginTop: 112,
+    marginTop: 132,
     zIndex: 2,
   },
   cardStack: {
@@ -843,5 +905,47 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontSize: 16,
     fontWeight: "600",
+  },
+  infoButton: {
+    position: "absolute",
+    top: 25,
+    right: 17,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 0,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.75)",
+  },
+  infoModalContent: {
+    width: "80%",
+    backgroundColor: "#1a1a2e",
+    borderRadius: 16,
+    padding: 24,
+  },
+  infoModalTitle: {
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  infoModalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  infoDivider: {
+    height: 1,
+    backgroundColor: "#444",
+    marginVertical: 8,
   },
 });

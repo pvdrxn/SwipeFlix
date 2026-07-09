@@ -1,5 +1,12 @@
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
+const LANGUAGE_MAP = { en: "en-US", es: "es-ES", ru: "ru-RU" };
+let currentLang = "en-US";
+
+export function setTmdbLanguage(lang) {
+  currentLang = LANGUAGE_MAP[lang] || "en-US";
+}
+
 function getTmdbApiKey() {
   return (
     process.env.EXPO_PUBLIC_TMDB_API_KEY ||
@@ -28,7 +35,7 @@ async function tmdbFetch(path, params = {}) {
 
   const query = toQueryString({
     api_key: apiKey,
-    language: "en-US",
+    language: currentLang,
     include_adult: false,
     ...params,
   });

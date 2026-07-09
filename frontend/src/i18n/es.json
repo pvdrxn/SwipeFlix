@@ -1,0 +1,122 @@
+{
+  "home": {
+    "searchPlaceholder": "Buscar películas...",
+    "filterFrom": "Desde",
+    "filterTo": "Hasta",
+    "filterRating": "Puntuación",
+    "noMoviesFound": "No se encontraron películas",
+    "refreshing": "Actualizando...",
+    "loading": "Cargando...",
+    "error": "Error: ",
+    "retry": "Reintentar"
+  },
+  "categories": {
+    "popular": "Populares",
+    "trending": "Tendencia",
+    "topRated": "Mejor valoradas",
+    "upcoming": "Próximamente"
+  },
+  "pick": {
+    "loading": "Cargando películas...",
+    "error": "Error: ",
+    "noMore": "¡No hay más películas!",
+    "savedCount": "Guardados: {saved} \u00b7 Pasados: {pass}",
+    "startOver": "Empezar de nuevo",
+    "noImage": "Sin imagen",
+    "leftToDislike": "Izquierda para descartar",
+    "upToWatchLater": "Arriba para ver después",
+    "rightToLike": "Derecha para gustar",
+    "tapForSynopsis": "toca para sinopsis",
+    "doubleTapToFavorite": "doble toque para favorito",
+    "swipeInstructions": "Instrucciones de deslizamiento"
+  },
+  "library": {
+    "loading": "Cargando...",
+    "error": "Error: ",
+    "emptyLikedTitle": "Sin películas gustadas",
+    "emptyLikedSubtitle": "Da like desde los Detalles de la Película",
+    "emptyPassTitle": "Sin películas descartadas",
+    "emptyPassSubtitle": "Descarta películas desde la pestaña Elegir",
+    "emptyWatchlaterTitle": "Sin películas guardadas",
+    "emptyWatchlaterSubtitle": "Guarda películas desde la pestaña Elegir",
+    "emptyFavoritesTitle": "Sin favoritos",
+    "emptyFavoritesSubtitle": "Favoritos desde los Detalles de la Película"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "account": "CUENTA",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "signOut": "Cerrar sesión",
+    "languageSection": "IDIOMA",
+    "manageLibrary": "GESTIONAR BIBLIOTECA",
+    "deleteLiked": "Eliminar lista de gustados",
+    "deleteDisliked": "Eliminar lista de descartados",
+    "deleteWatchLater": "Eliminar lista de ver después",
+    "deleteFavorites": "Eliminar lista de favoritos",
+    "resetLibrary": "Restablecer biblioteca",
+    "manageAccount": "GESTIONAR CUENTA",
+    "changePassword": "Cambiar contraseña",
+    "changeEmail": "Cambiar correo electrónico",
+    "deleteAccount": "Eliminar cuenta"
+  },
+  "modal": {
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "sendCode": "Enviar código",
+    "confirm": "Confirmar",
+    "changePassword": "Cambiar contraseña",
+    "changeEmail": "Cambiar correo electrónico",
+    "newPassword": "Nueva contraseña",
+    "newEmail": "Nuevo correo electrónico",
+    "enterPassword": "Ingresa tu contraseña",
+    "enterCode": "Ingresa el código",
+    "deleteAccountTitle": "¿Estás seguro de eliminar tu cuenta?",
+    "deleteAccountSubtitle": "Esta acción no se puede deshacer.",
+    "passwordChangedSuccess": "Contraseña cambiada exitosamente",
+    "emailChangedSuccess": "Correo electrónico cambiado exitosamente",
+    "weSentCode": "Enviamos un código de 6 dígitos a",
+    "confirmPasswordChange": "Confirmar cambio de contraseña",
+    "confirmEmailChange": "Confirmar cambio de correo electrónico"
+  },
+  "alert": {
+    "clearTitle": "Limpiar {label}",
+    "clearMessage": "¿Estás seguro de eliminar todos los {label}? Esto no se puede deshacer.",
+    "liked": "Gustados",
+    "disliked": "Descartados",
+    "watchLater": "Ver Después",
+    "favorites": "Favoritos",
+    "library": "Biblioteca"
+  },
+  "error": {
+    "incorrectPassword": "Contraseña incorrecta.",
+    "somethingWrong": "Algo salió mal. Intenta de nuevo.",
+    "passwordLength": "La contraseña debe tener al menos 8 caracteres.",
+    "couldNotSendCode": "No se pudo enviar el código. Intenta de nuevo.",
+    "invalidCode": "Código inválido o expirado.",
+    "invalidEmail": "Ingresa un correo electrónico válido."
+  },
+  "footer": {
+    "tmdb": "Este producto utiliza la API de TMDB pero no está respaldado ni certificado por TMDB."
+  },
+  "language": {
+    "en": "Inglés",
+    "es": "Español",
+    "ru": "Ruso",
+    "select": "Seleccionar idioma"
+  },
+  "auth": {
+    "logIn": "Iniciar sesión",
+    "register": "Registrarse"
+  },
+  "details": {
+    "loading": "Cargando...",
+    "error": "Error: ",
+    "noSynopsis": "Sinopsis no disponible.",
+    "cast": "Reparto",
+    "whereToWatch": "Dónde ver",
+    "min": "min",
+    "dir": "Dir.",
+    "na": "N/A"
+  }
+}

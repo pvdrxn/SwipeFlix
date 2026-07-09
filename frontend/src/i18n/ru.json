@@ -1,0 +1,122 @@
+{
+  "home": {
+    "searchPlaceholder": "Поиск фильмов...",
+    "filterFrom": "От",
+    "filterTo": "До",
+    "filterRating": "Рейтинг",
+    "noMoviesFound": "Фильмы не найдены",
+    "refreshing": "Обновление...",
+    "loading": "Загрузка...",
+    "error": "Ошибка: ",
+    "retry": "Повторить"
+  },
+  "categories": {
+    "popular": "Популярные",
+    "trending": "В тренде",
+    "topRated": "Лучшие",
+    "upcoming": "Скоро"
+  },
+  "pick": {
+    "loading": "Загрузка фильмов...",
+    "error": "Ошибка: ",
+    "noMore": "Больше нет фильмов!",
+    "savedCount": "Сохранено: {saved} \u00b7 Пропущено: {pass}",
+    "startOver": "Начать заново",
+    "noImage": "Нет изображения",
+    "leftToDislike": "Влево — не нравится",
+    "upToWatchLater": "Вверх — посмотреть позже",
+    "rightToLike": "Вправо — нравится",
+    "tapForSynopsis": "нажмите для синопсиса",
+    "doubleTapToFavorite": "двойное нажатие для избранного",
+    "swipeInstructions": "Инструкции по смахиванию"
+  },
+  "library": {
+    "loading": "Загрузка...",
+    "error": "Ошибка: ",
+    "emptyLikedTitle": "Нет понравившихся фильмов",
+    "emptyLikedSubtitle": "Отмечайте понравившиеся в деталях фильма",
+    "emptyPassTitle": "Нет отклонённых фильмов",
+    "emptyPassSubtitle": "Отклоняйте фильмы на вкладке «Выбрать»",
+    "emptyWatchlaterTitle": "Нет отложенных фильмов",
+    "emptyWatchlaterSubtitle": "Сохраняйте фильмы на вкладке «Выбрать»",
+    "emptyFavoritesTitle": "Нет избранных",
+    "emptyFavoritesSubtitle": "Добавляйте в избранное из деталей фильма"
+  },
+  "settings": {
+    "title": "Настройки",
+    "account": "АККАУНТ",
+    "username": "Имя пользователя",
+    "email": "Электронная почта",
+    "signOut": "Выйти",
+    "languageSection": "ЯЗЫК",
+    "manageLibrary": "УПРАВЛЕНИЕ БИБЛИОТЕКОЙ",
+    "deleteLiked": "Удалить список понравившихся",
+    "deleteDisliked": "Удалить список отклонённых",
+    "deleteWatchLater": "Удалить список отложенных",
+    "deleteFavorites": "Удалить список избранного",
+    "resetLibrary": "Сбросить библиотеку",
+    "manageAccount": "УПРАВЛЕНИЕ АККАУНТОМ",
+    "changePassword": "Сменить пароль",
+    "changeEmail": "Сменить почту",
+    "deleteAccount": "Удалить аккаунт"
+  },
+  "modal": {
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "sendCode": "Отправить код",
+    "confirm": "Подтвердить",
+    "changePassword": "Сменить пароль",
+    "changeEmail": "Сменить почту",
+    "newPassword": "Новый пароль",
+    "newEmail": "Новая почта",
+    "enterPassword": "Введите пароль",
+    "enterCode": "Введите код",
+    "deleteAccountTitle": "Вы уверены, что хотите удалить аккаунт?",
+    "deleteAccountSubtitle": "Это действие нельзя отменить.",
+    "passwordChangedSuccess": "Пароль успешно изменён",
+    "emailChangedSuccess": "Почта успешно изменена",
+    "weSentCode": "Мы отправили 6-значный код на",
+    "confirmPasswordChange": "Подтвердите смену пароля",
+    "confirmEmailChange": "Подтвердите смену почты"
+  },
+  "alert": {
+    "clearTitle": "Очистить {label}",
+    "clearMessage": "Вы уверены, что хотите удалить все {label}? Это действие нельзя отменить.",
+    "liked": "Понравившиеся",
+    "disliked": "Отклонённые",
+    "watchLater": "Отложенные",
+    "favorites": "Избранное",
+    "library": "Библиотека"
+  },
+  "error": {
+    "incorrectPassword": "Неверный пароль.",
+    "somethingWrong": "Что-то пошло не так. Попробуйте снова.",
+    "passwordLength": "Пароль должен содержать не менее 8 символов.",
+    "couldNotSendCode": "Не удалось отправить код. Попробуйте снова.",
+    "invalidCode": "Неверный или истёкший код.",
+    "invalidEmail": "Введите действительный адрес электронной почты."
+  },
+  "footer": {
+    "tmdb": "Этот продукт использует API TMDB, но не одобрен и не сертифицирован TMDB."
+  },
+  "language": {
+    "en": "Английский",
+    "es": "Испанский",
+    "ru": "Русский",
+    "select": "Выберите язык"
+  },
+  "auth": {
+    "logIn": "Войти",
+    "register": "Регистрация"
+  },
+  "details": {
+    "loading": "Загрузка...",
+    "error": "Ошибка: ",
+    "noSynopsis": "Синопсис недоступен.",
+    "cast": "Актёры",
+    "whereToWatch": "Где посмотреть",
+    "min": "мин",
+    "dir": "Реж.",
+    "na": "Н/Д"
+  }
+}

@@ -17,9 +17,11 @@ import { AuthContext } from "../auth/AuthContext";
 import { me, deleteAccount, sendPasswordCode, changePassword, sendEmailCode, changeEmail } from "../api/authApi";
 import { clearLiked, clearDisliked, clearSaved, clearFavorites, clearAll } from "../api/picksApi";
 import { colors } from "../theme";
+import { LanguageContext } from "../context/LanguageContext";
 
 export function SettingsScreen() {
   const { signOut } = useContext(AuthContext);
+  const { language, setLanguage, t } = useContext(LanguageContext);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +48,7 @@ export function SettingsScreen() {
   const [emailCode, setEmailCode] = useState("");
   const [verifyingEmail, setVerifyingEmail] = useState(false);
   const [emailVerifyError, setEmailVerifyError] = useState("");
+  const [langModalVisible, setLangModalVisible] = useState(false);
 
   const eyeRef = useRef(null);
 
@@ -71,9 +74,9 @@ export function SettingsScreen() {
       signOut();
     } catch (err) {
       if (err.response?.status === 400) {
-        setDeleteError("Incorrect password.");
+        setDeleteError(t("error.incorrectPassword"));
       } else {
-        setDeleteError("Something went wrong. Try again.");
+        setDeleteError(t("error.somethingWrong"));
       }
     } finally {
       setDeleting(false);
@@ -92,7 +95,7 @@ export function SettingsScreen() {
 
   async function handleSendCode() {
     if (newPassword.length < 8) {
-      setChangeError("Password must be at least 8 characters.");
+      setChangeError(t("error.passwordLength"));
       return;
     }
     setChangeError("");
@@ -101,7 +104,7 @@ export function SettingsScreen() {
       await sendPasswordCode();
       setPwStep("code");
     } catch (err) {
-      setChangeError("Could not send code. Try again.");
+      setChangeError(t("error.couldNotSendCode"));
     } finally {
       setSendingCode(false);
     }
@@ -119,59 +122,41 @@ export function SettingsScreen() {
       setCode("");
     } catch (err) {
       if (err.response?.status === 400) {
-        setVerifyError(err.response.data.detail || "Invalid or expired code.");
+        setVerifyError(err.response.data.detail || t("error.invalidCode"));
       } else {
-        setVerifyError("Something went wrong. Try again.");
+        setVerifyError(t("error.somethingWrong"));
       }
     } finally {
       setVerifying(false);
     }
   }
 
-  function confirmClear(action, label) {
+  function confirmClear(action, labelKey) {
+    const label = t(`alert.${labelKey}`);
     Alert.alert(
-      `Clear ${label}`,
-      `Are you sure you want to delete all ${label.toLowerCase()}? This cannot be undone.`,
+      t("alert.clearTitle", { label }),
+      t("alert.clearMessage", { label: label.toLowerCase() }),
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: action },
+        { text: t("modal.cancel"), style: "cancel" },
+        { text: t("modal.delete"), style: "destructive", onPress: action },
       ]
     );
   }
 
   function handleClearLiked() {
-    confirmClear(
-      () => clearLiked().catch(() => {}),
-      "Liked"
-    );
+    confirmClear(() => clearLiked().catch(() => {}), "liked");
   }
-
   function handleClearDisliked() {
-    confirmClear(
-      () => clearDisliked().catch(() => {}),
-      "Disliked"
-    );
+    confirmClear(() => clearDisliked().catch(() => {}), "disliked");
   }
-
   function handleClearSaved() {
-    confirmClear(
-      () => clearSaved().catch(() => {}),
-      "Watch Later"
-    );
+    confirmClear(() => clearSaved().catch(() => {}), "watchLater");
   }
-
   function handleClearFavorites() {
-    confirmClear(
-      () => clearFavorites().catch(() => {}),
-      "Favorites"
-    );
+    confirmClear(() => clearFavorites().catch(() => {}), "favorites");
   }
-
   function handleResetLibrary() {
-    confirmClear(
-      () => clearAll().catch(() => {}),
-      "Library"
-    );
+    confirmClear(() => clearAll().catch(() => {}), "library");
   }
 
   function handleOpenEmailModal() {
@@ -185,7 +170,7 @@ export function SettingsScreen() {
 
   async function handleSendEmailCode() {
     if (!newEmail.includes("@")) {
-      setEmailChangeError("Enter a valid email address.");
+      setEmailChangeError(t("error.invalidEmail"));
       return;
     }
     setEmailChangeError("");
@@ -194,7 +179,7 @@ export function SettingsScreen() {
       await sendEmailCode({ newEmail });
       setEmailStep("code");
     } catch (err) {
-      setEmailChangeError(err.response?.data?.detail || "Could not send code. Try again.");
+      setEmailChangeError(err.response?.data?.detail || t("error.couldNotSendCode"));
     } finally {
       setSendingEmailCode(false);
     }
@@ -213,9 +198,9 @@ export function SettingsScreen() {
       setUser((prev) => ({ ...prev, email: newEmail }));
     } catch (err) {
       if (err.response?.status === 400) {
-        setEmailVerifyError(err.response.data.detail || "Invalid or expired code.");
+        setEmailVerifyError(err.response.data.detail || t("error.invalidCode"));
       } else {
-        setEmailVerifyError("Something went wrong. Try again.");
+        setEmailVerifyError(t("error.somethingWrong"));
       }
     } finally {
       setVerifyingEmail(false);
@@ -225,7 +210,7 @@ export function SettingsScreen() {
   return (
     <View style={styles.root}>
       <View pointerEvents="box-none" style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t("settings.title")}</Text>
       </View>
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -234,12 +219,12 @@ export function SettingsScreen() {
       ) : (
         <ScrollView style={styles.scrollArea} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
           <View style={[styles.section, { backgroundColor: "#1a1a1a" }]}>
-            <Text style={styles.sectionLabel}>ACCOUNT</Text>
+            <Text style={styles.sectionLabel}>{t("settings.account")}</Text>
             <View style={styles.row}>
                 <Feather name="user" size={22} color={colors.text.primary} />
               <View style={styles.rowInfo}>
                 <Text style={styles.rowValue}>{user?.username || "—"}</Text>
-                <Text style={styles.rowLabel}>Username</Text>
+                <Text style={styles.rowLabel}>{t("settings.username")}</Text>
               </View>
             </View>
             <View style={styles.divider} />
@@ -247,7 +232,7 @@ export function SettingsScreen() {
                 <Feather name="mail" size={22} color={colors.text.primary} />
               <View style={styles.rowInfo}>
                 <Text style={styles.rowValue}>{user?.email || "—"}</Text>
-                <Text style={styles.rowLabel}>Email</Text>
+                <Text style={styles.rowLabel}>{t("settings.email")}</Text>
               </View>
             </View>
             <View style={styles.divider} />
@@ -255,75 +240,86 @@ export function SettingsScreen() {
               <View style={styles.chipIcon}>
                 <Feather name="log-out" size={24} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>Sign out</Text>
+              <Text style={styles.chipLabel}>{t("settings.signOut")}</Text>
             </Pressable>
           </View>
 
           <View style={[styles.section, { backgroundColor: "#1a1a1a" }]}>
-            <Text style={styles.sectionLabel}>MANAGE LIBRARY</Text>
+            <Text style={styles.sectionLabel}>{t("settings.manageLibrary")}</Text>
             <Pressable style={styles.chip} onPress={handleClearLiked}>
               <View style={styles.chipIcon}>
                 <Feather name="thumbs-up" size={22} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>Delete liked list</Text>
+              <Text style={styles.chipLabel}>{t("settings.deleteLiked")}</Text>
             </Pressable>
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleClearDisliked}>
               <View style={styles.chipIcon}>
                 <Feather name="thumbs-down" size={22} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>Delete disliked list</Text>
+              <Text style={styles.chipLabel}>{t("settings.deleteDisliked")}</Text>
             </Pressable>
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleClearSaved}>
               <View style={styles.chipIcon}>
                 <Feather name="bookmark" size={22} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>Delete watch later list</Text>
+              <Text style={styles.chipLabel}>{t("settings.deleteWatchLater")}</Text>
             </Pressable>
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleClearFavorites}>
               <View style={styles.chipIcon}>
                 <Feather name="star" size={22} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>Delete favorites list</Text>
+              <Text style={styles.chipLabel}>{t("settings.deleteFavorites")}</Text>
             </Pressable>
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleResetLibrary}>
               <View style={styles.chipIcon}>
                 <Feather name="refresh-cw" size={22} color={colors.accent} />
               </View>
-              <Text style={[styles.chipLabel, { color: colors.accent }]}>Reset library</Text>
+              <Text style={[styles.chipLabel, { color: colors.accent }]}>{t("settings.resetLibrary")}</Text>
             </Pressable>
           </View>
 
           <View style={[styles.section, { backgroundColor: "#1a1a1a" }]}>
-            <Text style={styles.sectionLabel}>MANAGE ACCOUNT</Text>
+            <Text style={styles.sectionLabel}>{t("settings.languageSection")}</Text>
+            <Pressable style={styles.chip} onPress={() => setLangModalVisible(true)}>
+              <View style={styles.chipIcon}>
+                <Feather name="globe" size={22} color={colors.text.primary} />
+              </View>
+              <Text style={styles.chipLabel}>{t(`language.${language}`)}</Text>
+              <Feather name="chevron-right" size={20} color={colors.text.tertiary} style={{ marginLeft: "auto" }} />
+            </Pressable>
+          </View>
+
+          <View style={[styles.section, { backgroundColor: "#1a1a1a" }]}>
+            <Text style={styles.sectionLabel}>{t("settings.manageAccount")}</Text>
             <Pressable style={styles.chip} onPress={handleOpenPwModal}>
               <View style={styles.chipIcon}>
                 <Feather name="lock" size={22} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>Change password</Text>
+              <Text style={styles.chipLabel}>{t("settings.changePassword")}</Text>
             </Pressable>
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleOpenEmailModal}>
               <View style={styles.chipIcon}>
                 <Feather name="mail" size={22} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>Change email</Text>
+              <Text style={styles.chipLabel}>{t("settings.changeEmail")}</Text>
             </Pressable>
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleOpenDeleteModal}>
               <View style={styles.chipIcon}>
                 <Feather name="trash-2" size={22} color={colors.accent} />
               </View>
-              <Text style={[styles.chipLabel, { color: colors.accent }]}>Delete account</Text>
+              <Text style={[styles.chipLabel, { color: colors.accent }]}>{t("settings.deleteAccount")}</Text>
             </Pressable>
           </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              This product uses the TMDB API but is not endorsed or certified by TMDB.
+              {t("footer.tmdb")}
             </Text>
           </View>
         </ScrollView>
@@ -340,12 +336,12 @@ export function SettingsScreen() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Are you sure you want to delete your account?</Text>
-            <Text style={styles.modalSubtitle}>This action cannot be undone.</Text>
+            <Text style={styles.modalTitle}>{t("modal.deleteAccountTitle")}</Text>
+            <Text style={styles.modalSubtitle}>{t("modal.deleteAccountSubtitle")}</Text>
 
             <TextInput
               style={styles.passwordInput}
-              placeholder="Enter your password"
+              placeholder={t("modal.enterPassword")}
               placeholderTextColor={colors.text.muted}
               secureTextEntry
               value={deletePassword}
@@ -364,7 +360,7 @@ export function SettingsScreen() {
                 onPress={() => setDeleteModalVisible(false)}
                 disabled={deleting}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{t("modal.cancel")}</Text>
               </Pressable>
               <Pressable
                 style={[styles.deleteButton, deleting && styles.buttonDisabled]}
@@ -374,7 +370,7 @@ export function SettingsScreen() {
                 {deleting ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.deleteButtonText}>Delete</Text>
+                  <Text style={styles.deleteButtonText}>{t("modal.delete")}</Text>
                 )}
               </Pressable>
             </View>
@@ -399,11 +395,11 @@ export function SettingsScreen() {
 
             {pwStep === "input" ? (
               <>
-                <Text style={styles.modalTitle}>Change password</Text>
+                <Text style={styles.modalTitle}>{t("modal.changePassword")}</Text>
                 <View style={styles.modalInputWrapper}>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="New password"
+                    placeholder={t("modal.newPassword")}
                     placeholderTextColor={colors.text.muted}
                     secureTextEntry={!showNewPassword}
                     value={newPassword}
@@ -434,19 +430,19 @@ export function SettingsScreen() {
                   {sendingCode ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.verifyButtonText}>Send code</Text>
+                    <Text style={styles.verifyButtonText}>{t("modal.sendCode")}</Text>
                   )}
                 </Pressable>
               </>
             ) : pwStep === "code" ? (
               <>
-                <Text style={styles.modalTitle}>Confirm password change</Text>
+                <Text style={styles.modalTitle}>{t("modal.confirmPasswordChange")}</Text>
                 <Text style={styles.modalSubtitle}>
-                  We sent a 6-digit code to{"\n"}{user?.email}
+                  {t("modal.weSentCode")}{"\n"}{user?.email}
                 </Text>
                 <TextInput
                   style={styles.codeInput}
-                  placeholder="Enter code"
+                  placeholder={t("modal.enterCode")}
                   placeholderTextColor={colors.text.muted}
                   value={code}
                   onChangeText={(text) => {
@@ -465,14 +461,14 @@ export function SettingsScreen() {
                   {verifying ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.verifyButtonText}>Confirm</Text>
+                    <Text style={styles.verifyButtonText}>{t("modal.confirm")}</Text>
                   )}
                 </Pressable>
               </>
             ) : (
               <>
                 <Text style={styles.successIcon}>✓</Text>
-                <Text style={styles.successText}>Password changed successfully</Text>
+                <Text style={styles.successText}>{t("modal.passwordChangedSuccess")}</Text>
               </>
             )}
           </View>
@@ -496,11 +492,11 @@ export function SettingsScreen() {
 
             {emailStep === "input" ? (
               <>
-                <Text style={styles.modalTitle}>Change email</Text>
+                <Text style={styles.modalTitle}>{t("modal.changeEmail")}</Text>
                 <View style={styles.modalInputWrapper}>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder="New email"
+                    placeholder={t("modal.newEmail")}
                     placeholderTextColor={colors.text.muted}
                     value={newEmail}
                     onChangeText={(text) => {
@@ -520,19 +516,19 @@ export function SettingsScreen() {
                   {sendingEmailCode ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.verifyButtonText}>Send code</Text>
+                    <Text style={styles.verifyButtonText}>{t("modal.sendCode")}</Text>
                   )}
                 </Pressable>
               </>
             ) : emailStep === "code" ? (
               <>
-                <Text style={styles.modalTitle}>Confirm email change</Text>
+                <Text style={styles.modalTitle}>{t("modal.confirmEmailChange")}</Text>
                 <Text style={styles.modalSubtitle}>
-                  We sent a 6-digit code to{"\n"}{newEmail}
+                  {t("modal.weSentCode")}{"\n"}{newEmail}
                 </Text>
                 <TextInput
                   style={styles.codeInput}
-                  placeholder="Enter code"
+                  placeholder={t("modal.enterCode")}
                   placeholderTextColor={colors.text.muted}
                   value={emailCode}
                   onChangeText={(text) => {
@@ -551,18 +547,56 @@ export function SettingsScreen() {
                   {verifyingEmail ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.verifyButtonText}>Confirm</Text>
+                    <Text style={styles.verifyButtonText}>{t("modal.confirm")}</Text>
                   )}
                 </Pressable>
               </>
             ) : (
               <>
                 <Text style={styles.successIcon}>✓</Text>
-                <Text style={styles.successText}>Email changed successfully</Text>
+                <Text style={styles.successText}>{t("modal.emailChangedSuccess")}</Text>
               </>
             )}
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={langModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLangModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setLangModalVisible(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t("language.select")}</Text>
+            {["en", "es", "ru"].map((lang) => (
+              <Pressable
+                key={lang}
+                style={[
+                  styles.langOption,
+                  language === lang && styles.langOptionActive,
+                ]}
+                onPress={() => {
+                  setLanguage(lang);
+                  setLangModalVisible(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.langOptionText,
+                    language === lang && styles.langOptionTextActive,
+                  ]}
+                >
+                  {t(`language.${lang}`)}
+                </Text>
+                {language === lang && (
+                  <Feather name="check" size={20} color={colors.accent} />
+                )}
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -645,7 +679,7 @@ const styles = StyleSheet.create({
   },
 
   chip: {
-    alignSelf: "flex-start",
+    alignSelf: "stretch",
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -818,5 +852,26 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: "center",
     lineHeight: 16,
+  },
+  langOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  langOptionActive: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  langOptionText: {
+    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  langOptionTextActive: {
+    color: colors.accent,
   },
 });

@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Animated } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { MovieCard } from "../components/MovieCard";
 import { useNavigation } from "@react-navigation/native";
 import { getPicks, subscribePicks, subscribeWatched, getWatchedPicks, getFavorites, subscribeFavorites } from "../api/picksApi";
 import { colors } from "../theme";
+import { fetchMovieDetails } from "../services/tmdb";
+import { LanguageContext } from "../context/LanguageContext";
 
 const CHIP_COLORS = {
   liked: colors.swipe.save,
@@ -21,13 +23,14 @@ const CHIP_ICONS = {
 };
 
 const CHIPS = [
-  { key: "liked", label: "Liked" },
-  { key: "pass", label: "Disliked" },
-  { key: "watchlater", label: "Watch Later" },
-  { key: "favorites", label: "Favorites" },
+  { key: "liked", labelKey: "liked" },
+  { key: "pass", labelKey: "disliked" },
+  { key: "watchlater", labelKey: "watchLater" },
+  { key: "favorites", labelKey: "favorites" },
 ];
 
 export function LibraryScreen() {
+  const { language, t } = useContext(LanguageContext);
   const navigation = useNavigation();
   const [selectedChip, setSelectedChip] = useState("watchlater");
   const [movies, setMovies] = useState([]);
@@ -46,10 +49,25 @@ export function LibraryScreen() {
       const choiceMap = { liked: likedData, pass: passData, watchlater: watchlaterData, favorites: favsData };
       const data = choiceMap[selectedChip];
       const watchedIds = new Set(watchedData.map(w => Number(w.tmdb_id)));
-      const moviesWithWatched = data.map(item => ({
+      let moviesWithWatched = data.map(item => ({
         ...item,
         watched: watchedIds.has(Number(item.tmdb_id))
       }));
+      if (language !== "en") {
+        const details = await Promise.allSettled(
+          moviesWithWatched.map(item =>
+            fetchMovieDetails(item.tmdb_id).then(d => ({ id: item.tmdb_id, title: d.title }))
+          )
+        );
+        const titleMap = {};
+        details.forEach(r => {
+          if (r.status === "fulfilled") titleMap[r.value.id] = r.value.title;
+        });
+        moviesWithWatched = moviesWithWatched.map(item => ({
+          ...item,
+          title: titleMap[item.tmdb_id] || item.title,
+        }));
+      }
       setMovies(moviesWithWatched);
       setError(null);
     } catch (err) {
@@ -58,7 +76,7 @@ export function LibraryScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedChip]);
+  }, [selectedChip, language]);
 
   useEffect(() => {
     setLoading(true);
@@ -117,19 +135,19 @@ export function LibraryScreen() {
   };
 
   const getEmptyMessage = () => {
-    if (selectedChip === "liked") return { title: "No liked movies", subtitle: "Like movies from Movie Details" };
-    if (selectedChip === "pass") return { title: "No disliked movies", subtitle: "Dislike movies from the Pick tab" };
-    if (selectedChip === "watchlater") return { title: "No watch later movies", subtitle: "Save movies from the Pick tab" };
-    return { title: "No favorites", subtitle: "Favorite movies from Movie Details" };
+    if (selectedChip === "liked") return { title: t("library.emptyLikedTitle"), subtitle: t("library.emptyLikedSubtitle") };
+    if (selectedChip === "pass") return { title: t("library.emptyPassTitle"), subtitle: t("library.emptyPassSubtitle") };
+    if (selectedChip === "watchlater") return { title: t("library.emptyWatchlaterTitle"), subtitle: t("library.emptyWatchlaterSubtitle") };
+    return { title: t("library.emptyFavoritesTitle"), subtitle: t("library.emptyFavoritesSubtitle") };
   };
 
   const emptyMsg = getEmptyMessage();
 
   const headerTitles = {
-    liked: "Liked",
-    pass: "Disliked",
-    watchlater: "Watch Later",
-    favorites: "Favorites",
+    liked: t("alert.liked"),
+    pass: t("alert.disliked"),
+    watchlater: t("alert.watchLater"),
+    favorites: t("alert.favorites"),
   };
 
   return (
@@ -170,7 +188,7 @@ export function LibraryScreen() {
       </View>
       {loading ? (
         <View style={styles.centered}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={styles.loadingText}>{t("library.loading")}</Text>
         </View>
       ) : error ? (
         <View style={styles.centered}>

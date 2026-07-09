@@ -1,0 +1,122 @@
+{
+  "home": {
+    "searchPlaceholder": "Search movies...",
+    "filterFrom": "From",
+    "filterTo": "To",
+    "filterRating": "Rating",
+    "noMoviesFound": "No movies found",
+    "refreshing": "Refreshing...",
+    "loading": "Loading...",
+    "error": "Error: ",
+    "retry": "Retry"
+  },
+  "categories": {
+    "popular": "Popular",
+    "trending": "Trending",
+    "topRated": "Top Rated",
+    "upcoming": "Upcoming"
+  },
+  "pick": {
+    "loading": "Loading movies...",
+    "error": "Error: ",
+    "noMore": "No more movies!",
+    "savedCount": "Saved: {saved} \u00b7 Pass: {pass}",
+    "startOver": "Start Over",
+    "noImage": "No Image",
+    "leftToDislike": "Left to dislike",
+    "upToWatchLater": "Up to watch later",
+    "rightToLike": "Right to like",
+    "tapForSynopsis": "tap for synopsis",
+    "doubleTapToFavorite": "double tap to favorite",
+    "swipeInstructions": "Swipe instructions"
+  },
+  "library": {
+    "loading": "Loading...",
+    "error": "Error: ",
+    "emptyLikedTitle": "No liked movies",
+    "emptyLikedSubtitle": "Like movies from Movie Details",
+    "emptyPassTitle": "No disliked movies",
+    "emptyPassSubtitle": "Dislike movies from the Pick tab",
+    "emptyWatchlaterTitle": "No watch later movies",
+    "emptyWatchlaterSubtitle": "Save movies from the Pick tab",
+    "emptyFavoritesTitle": "No favorites",
+    "emptyFavoritesSubtitle": "Favorite movies from Movie Details"
+  },
+  "settings": {
+    "title": "Settings",
+    "account": "ACCOUNT",
+    "username": "Username",
+    "email": "Email",
+    "signOut": "Sign out",
+    "languageSection": "LANGUAGE",
+    "manageLibrary": "MANAGE LIBRARY",
+    "deleteLiked": "Delete liked list",
+    "deleteDisliked": "Delete disliked list",
+    "deleteWatchLater": "Delete watch later list",
+    "deleteFavorites": "Delete favorites list",
+    "resetLibrary": "Reset library",
+    "manageAccount": "MANAGE ACCOUNT",
+    "changePassword": "Change password",
+    "changeEmail": "Change email",
+    "deleteAccount": "Delete account"
+  },
+  "modal": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "sendCode": "Send code",
+    "confirm": "Confirm",
+    "changePassword": "Change password",
+    "changeEmail": "Change email",
+    "newPassword": "New password",
+    "newEmail": "New email",
+    "enterPassword": "Enter your password",
+    "enterCode": "Enter code",
+    "deleteAccountTitle": "Are you sure you want to delete your account?",
+    "deleteAccountSubtitle": "This action cannot be undone.",
+    "passwordChangedSuccess": "Password changed successfully",
+    "emailChangedSuccess": "Email changed successfully",
+    "weSentCode": "We sent a 6-digit code to",
+    "confirmPasswordChange": "Confirm password change",
+    "confirmEmailChange": "Confirm email change"
+  },
+  "alert": {
+    "clearTitle": "Clear {label}",
+    "clearMessage": "Are you sure you want to delete all {label}? This cannot be undone.",
+    "liked": "Liked",
+    "disliked": "Disliked",
+    "watchLater": "Watch Later",
+    "favorites": "Favorites",
+    "library": "Library"
+  },
+  "error": {
+    "incorrectPassword": "Incorrect password.",
+    "somethingWrong": "Something went wrong. Try again.",
+    "passwordLength": "Password must be at least 8 characters.",
+    "couldNotSendCode": "Could not send code. Try again.",
+    "invalidCode": "Invalid or expired code.",
+    "invalidEmail": "Enter a valid email address."
+  },
+  "footer": {
+    "tmdb": "This product uses the TMDB API but is not endorsed or certified by TMDB."
+  },
+  "language": {
+    "en": "English",
+    "es": "Spanish",
+    "ru": "Russian",
+    "select": "Select language"
+  },
+  "auth": {
+    "logIn": "Log in",
+    "register": "Register"
+  },
+  "details": {
+    "loading": "Loading...",
+    "error": "Error: ",
+    "noSynopsis": "No synopsis available.",
+    "cast": "Cast",
+    "whereToWatch": "Where to Watch",
+    "min": "min",
+    "dir": "Dir.",
+    "na": "N/A"
+  }
+}

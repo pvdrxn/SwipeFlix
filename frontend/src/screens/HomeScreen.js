@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
 import { Animated, Pressable, StyleSheet, Text, View, FlatList, ScrollView, RefreshControl, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
@@ -15,15 +15,17 @@ import {
   discoverMovies,
 } from "../services/tmdb";
 import { getWatchedPicks, subscribeWatched } from "../api/picksApi";
+import { LanguageContext } from "../context/LanguageContext";
 
 const CATEGORIES = [
-  { key: "popular", title: "Popular", fetchFn: fetchPopularMovies },
-  { key: "trending", title: "Trending", fetchFn: fetchTrendingMovies },
-  { key: "top_rated", title: "Top Rated", fetchFn: fetchTopRatedMovies },
-  { key: "upcoming", title: "Upcoming", fetchFn: fetchUpcomingMovies },
+  { key: "popular", titleKey: "popular", fetchFn: fetchPopularMovies },
+  { key: "trending", titleKey: "trending", fetchFn: fetchTrendingMovies },
+  { key: "top_rated", titleKey: "topRated", fetchFn: fetchTopRatedMovies },
+  { key: "upcoming", titleKey: "upcoming", fetchFn: fetchUpcomingMovies },
 ];
 
 export function HomeScreen() {
+  const { language, t } = useContext(LanguageContext);
   const navigation = useNavigation();
   const [categoryData, setCategoryData] = useState({});
   const [watchedIds, setWatchedIds] = useState(new Set());
@@ -94,7 +96,7 @@ export function HomeScreen() {
     fetchAllCategories();
     fetchWatched();
     fetchGenres().then((data) => setGenres(data.genres || [])).catch(() => {});
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     const unsubscribe = subscribeWatched(() => {
@@ -210,7 +212,7 @@ export function HomeScreen() {
               <Feather name="search" size={18} color={colors.accent} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search movies..."
+                placeholder={t("home.searchPlaceholder")}
                 placeholderTextColor={colors.text.tertiary}
                 value={query}
                 onChangeText={handleSearch}
@@ -235,7 +237,7 @@ export function HomeScreen() {
                   <Animated.View key={g.id} style={{ transform: [{ scale: getScaleAnim(g.id) }] }}>
                   <Pressable
                     onPress={() => handleGenreSelect(g.id)}
-                    style={[styles.filterChip, active && { backgroundColor: colors.genre[g.name] || colors.text.primary }, { borderColor: colors.genre[g.name] || colors.text.tertiary }]}
+                    style={[styles.filterChip, active && { backgroundColor: colors.genreById[g.id] || colors.text.primary }, { borderColor: colors.genreById[g.id] || colors.text.tertiary }]}
                   >
                     <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{g.name}</Text>
                   </Pressable>
@@ -249,7 +251,7 @@ export function HomeScreen() {
                 <Feather name="calendar" size={14} color={colors.accent} />
                 <TextInput
                   style={styles.filterInput}
-                  placeholder="From"
+                  placeholder={t("home.filterFrom")}
                   placeholderTextColor={colors.text.muted}
                   value={startYear}
                   onChangeText={(v) => setStartYear(v.replace(/[^0-9]/g, ""))}
@@ -261,7 +263,7 @@ export function HomeScreen() {
                 <Feather name="calendar" size={14} color={colors.accent} />
                 <TextInput
                   style={styles.filterInput}
-                  placeholder="To"
+                  placeholder={t("home.filterTo")}
                   placeholderTextColor={colors.text.muted}
                   value={endYear}
                   onChangeText={(v) => setEndYear(v.replace(/[^0-9]/g, ""))}
@@ -273,7 +275,7 @@ export function HomeScreen() {
                 <Feather name="star" size={14} color={colors.accent} />
                 <TextInput
                   style={styles.filterInput}
-                  placeholder="Rating"
+                  placeholder={t("home.filterRating")}
                   placeholderTextColor={colors.text.muted}
                   value={minRating}
                   onChangeText={(v) => setMinRating(v.replace(/[^0-9.]/g, ""))}
@@ -300,7 +302,7 @@ export function HomeScreen() {
             ListEmptyComponent={
               searching ? null : (
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No movies found</Text>
+                  <Text style={styles.emptyText}>{t("home.noMoviesFound")}</Text>
                 </View>
               )
             }
@@ -308,13 +310,13 @@ export function HomeScreen() {
         ) : (loading || refreshing) && !error ? (
           <View style={styles.content}>
             <Animated.Text style={[styles.loadingText, { transform: [{ rotate: spin }] }]}>↻</Animated.Text>
-            <Text style={styles.statusText}>{refreshing ? "Refreshing..." : "Loading..."}</Text>
+            <Text style={styles.statusText}>{refreshing ? t("home.refreshing") : t("home.loading")}</Text>
           </View>
         ) : error ? (
           <View style={styles.content}>
-            <Text style={styles.error}>Error: {error}</Text>
+            <Text style={styles.error}>{t("home.error")}{error}</Text>
             <Pressable onPress={handleRefresh} style={styles.retryButton}>
-              <Text style={styles.retryText}>Retry</Text>
+              <Text style={styles.retryText}>{t("home.retry")}</Text>
             </Pressable>
           </View>
         ) : (
@@ -329,7 +331,7 @@ export function HomeScreen() {
               <View key={category.key} style={styles.section}>
                 <View style={styles.sectionTitleRow}>
                   <View style={styles.sectionTitleBar} />
-                  <Text style={styles.sectionTitle}>{category.title}</Text>
+                  <Text style={styles.sectionTitle}>{t(`categories.${category.titleKey}`)}</Text>
                 </View>
                 <FlatList
                   data={categoryData[category.key] || []}
