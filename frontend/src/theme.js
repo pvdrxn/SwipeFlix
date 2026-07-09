@@ -15,7 +15,7 @@ export const colors = {
   accentSecondary: "#FF6B6B",
   success: "#16a34a",
   rating: "#FBBF24",
-  favorite: "#FF6464",
+  favorite: "#FBBF24",
   swipe: {
     pass: "#E50914",
     save: "#16a34a",

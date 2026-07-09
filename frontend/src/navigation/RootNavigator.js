@@ -35,7 +35,7 @@ const AnimatedSettingsScreen = withFadeTransition(SettingsScreen);
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const TAB_ICONS = {
-  Browse: "search",
+  Browse: "home",
   Library: "book",
   Pick: "film",
   Settings: "settings",

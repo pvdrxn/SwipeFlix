@@ -1,39 +1,49 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Animated } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { MovieCard } from "../components/MovieCard";
 import { useNavigation } from "@react-navigation/native";
-import { getPicks, subscribePicks, subscribeWatched, getWatchedPicks } from "../api/picksApi";
+import { getPicks, subscribePicks, subscribeWatched, getWatchedPicks, getFavorites, subscribeFavorites } from "../api/picksApi";
 import { colors } from "../theme";
 
 const CHIP_COLORS = {
   liked: colors.swipe.save,
   pass: colors.swipe.pass,
-  saved: colors.swipe.saved,
+  watchlater: colors.swipe.saved,
+  favorites: colors.favorite,
+};
+
+const CHIP_ICONS = {
+  liked: "thumbs-up",
+  pass: "thumbs-down",
+  watchlater: "bookmark",
+  favorites: "star",
 };
 
 const CHIPS = [
   { key: "liked", label: "Liked" },
   { key: "pass", label: "Disliked" },
-  { key: "saved", label: "Saved" },
+  { key: "watchlater", label: "Watch Later" },
+  { key: "favorites", label: "Favorites" },
 ];
 
 export function LibraryScreen() {
   const navigation = useNavigation();
-  const [selectedChip, setSelectedChip] = useState("saved");
+  const [selectedChip, setSelectedChip] = useState("watchlater");
   const [movies, setMovies] = useState([]);
-  const [counts, setCounts] = useState({ liked: 0, pass: 0, saved: 0 });
+  const [counts, setCounts] = useState({ liked: 0, pass: 0, watchlater: 0, favorites: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchMovies = useCallback(async () => {
     try {
-      const [[likedData, passData, savedData], watchedData] = await Promise.all([
-        Promise.all([getPicks({ choice: "liked" }), getPicks({ choice: "pass" }), getPicks({ isSaved: true })]),
+      const [[likedData, passData, watchlaterData, favsData], watchedData] = await Promise.all([
+        Promise.all([getPicks({ choice: "liked" }), getPicks({ choice: "pass" }), getPicks({ isSaved: true }), getFavorites()]),
         getWatchedPicks()
       ]);
-      setCounts({ liked: likedData.length, pass: passData.length, saved: savedData.length });
-      const choiceMap = { liked: likedData, pass: passData, saved: savedData };
+      setCounts({ liked: likedData.length, pass: passData.length, watchlater: watchlaterData.length, favorites: favsData.length });
+      const choiceMap = { liked: likedData, pass: passData, watchlater: watchlaterData, favorites: favsData };
       const data = choiceMap[selectedChip];
       const watchedIds = new Set(watchedData.map(w => Number(w.tmdb_id)));
       const moviesWithWatched = data.map(item => ({
@@ -62,9 +72,13 @@ export function LibraryScreen() {
     const unsubscribeWatched = subscribeWatched(() => {
       fetchMovies();
     });
+    const unsubscribeFavs = subscribeFavorites(() => {
+      fetchMovies();
+    });
     return () => {
       unsubscribePicks();
       unsubscribeWatched();
+      unsubscribeFavs();
     };
   }, [fetchMovies]);
 
@@ -105,15 +119,23 @@ export function LibraryScreen() {
   const getEmptyMessage = () => {
     if (selectedChip === "liked") return { title: "No liked movies", subtitle: "Like movies from Movie Details" };
     if (selectedChip === "pass") return { title: "No disliked movies", subtitle: "Dislike movies from the Pick tab" };
-    return { title: "No saved movies", subtitle: "Save movies from the Pick tab" };
+    if (selectedChip === "watchlater") return { title: "No watch later movies", subtitle: "Save movies from the Pick tab" };
+    return { title: "No favorites", subtitle: "Favorite movies from Movie Details" };
   };
 
   const emptyMsg = getEmptyMessage();
 
+  const headerTitles = {
+    liked: "Liked",
+    pass: "Disliked",
+    watchlater: "Watch Later",
+    favorites: "Favorites",
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Library</Text>
+        <Text style={styles.title}>{headerTitles[selectedChip]}</Text>
       </View>
       <View style={styles.chipsRow}>
         {CHIPS.map(chip => {
@@ -135,9 +157,12 @@ export function LibraryScreen() {
                   },
                 ]}
               >
-                <Text style={[styles.chipText, { color: isActive ? "#fff" : colors.text.tertiary }]}>
-                  {chip.label} ({counts[chip.key]})
-                </Text>
+                <View style={styles.chipContent}>
+                  <Feather name={CHIP_ICONS[chip.key]} size={14} color={isActive ? "#fff" : colors.text.tertiary} />
+                  <Text style={[styles.chipText, { color: isActive ? "#fff" : colors.text.tertiary }]}>
+                    {counts[chip.key]}
+                  </Text>
+                </View>
               </Animated.View>
             </Pressable>
           );
@@ -218,6 +243,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+  },
+  chipContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   chipText: {
     fontSize: 14,

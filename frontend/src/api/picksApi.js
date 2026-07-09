@@ -2,6 +2,7 @@ import { http } from "./http";
 
 const pickListeners = [];
 const watchedListeners = [];
+const favoriteListeners = [];
 
 export function subscribePicks(callback) {
   pickListeners.push(callback);
@@ -19,12 +20,24 @@ export function subscribeWatched(callback) {
   };
 }
 
+export function subscribeFavorites(callback) {
+  favoriteListeners.push(callback);
+  return () => {
+    const idx = favoriteListeners.indexOf(callback);
+    if (idx > -1) favoriteListeners.splice(idx, 1);
+  };
+}
+
 function notifyPickListeners() {
   pickListeners.forEach(cb => cb());
 }
 
 function notifyWatchedListeners() {
   watchedListeners.forEach(cb => cb());
+}
+
+function notifyFavoriteListeners() {
+  favoriteListeners.forEach(cb => cb());
 }
 
 export async function addPick({ tmdbId, title, posterPath, rating, choice, is_saved, notify = true }) {
@@ -110,5 +123,29 @@ export async function clearSaved() {
 export async function clearAll() {
   const { data } = await http.post("/api/picks/clear_all/");
   notifyPickListeners();
+  return data;
+}
+
+export async function toggleFavorite({ tmdbId, title, posterPath, rating }) {
+  const payload = { tmdb_id: tmdbId, title };
+  if (posterPath) {
+    payload.poster_path = posterPath.startsWith("http") ? posterPath : `https://image.tmdb.org/t/p/w500${posterPath}`;
+  }
+  if (rating != null && typeof rating === "number" && !isNaN(rating)) {
+    payload.rating = Math.round(rating * 10) / 10;
+  }
+  const { data } = await http.post("/api/picks/toggle_favorite/", payload);
+  notifyFavoriteListeners();
+  return data;
+}
+
+export async function getFavorites() {
+  const { data } = await http.get("/api/picks/favorites/");
+  return data;
+}
+
+export async function clearFavorites() {
+  const { data } = await http.post("/api/picks/clear_favorites/");
+  notifyFavoriteListeners();
   return data;
 }

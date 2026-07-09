@@ -4,7 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchMovieDetails, fetchMovieCredits, fetchMovieWatchProviders, fetchMovieTrailer, fetchMovieReleaseDates } from "../services/tmdb";
-import { addPick, deletePick, getPicks, subscribePicks, subscribeWatched, getWatchedPicks, toggleWatched, toggleSave } from "../api/picksApi";
+import { addPick, deletePick, getPicks, subscribePicks, subscribeWatched, getWatchedPicks, toggleWatched, toggleSave, toggleFavorite, getFavorites, subscribeFavorites } from "../api/picksApi";
 import { colors } from "../theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -31,10 +31,12 @@ export function MovieDetailsScreen({ route, navigation }) {
   const [likedId, setLikedId] = useState(null);
   const [isWatched, setIsWatched] = useState(false);
   const [isPassed, setIsPassed] = useState(false);
+  const [isFaved, setIsFaved] = useState(false);
   const favScale = useRef(new Animated.Value(1)).current;
   const likeScale = useRef(new Animated.Value(1)).current;
   const passScale = useRef(new Animated.Value(1)).current;
   const watchScale = useRef(new Animated.Value(1)).current;
+  const heartScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Promise.all([
@@ -92,6 +94,16 @@ export function MovieDetailsScreen({ route, navigation }) {
     }
   }, [movieId]);
 
+  const checkFaved = useCallback(async () => {
+    try {
+      const favs = await getFavorites();
+      const found = favs.find(p => Number(p.tmdb_id) === Number(movieId));
+      setIsFaved(!!found);
+    } catch (err) {
+      console.warn("Failed to check favorite:", err.message);
+    }
+  }, [movieId]);
+
   const checkPassed = useCallback(async () => {
     try {
       const picks = await getPicks({ choice: "pass" });
@@ -107,7 +119,8 @@ export function MovieDetailsScreen({ route, navigation }) {
     checkLiked();
     checkWatched();
     checkPassed();
-  }, [checkFavorite, checkLiked, checkWatched, checkPassed]);
+    checkFaved();
+  }, [checkFavorite, checkLiked, checkWatched, checkPassed, checkFaved]);
 
   useEffect(() => {
     const unsubscribePicks = subscribePicks(() => {
@@ -115,8 +128,14 @@ export function MovieDetailsScreen({ route, navigation }) {
       checkLiked();
       checkPassed();
     });
-    return unsubscribePicks;
-  }, [checkFavorite, checkLiked, checkPassed]);
+    const unsubscribeFavs = subscribeFavorites(() => {
+      checkFaved();
+    });
+    return () => {
+      unsubscribePicks();
+      unsubscribeFavs();
+    };
+  }, [checkFavorite, checkLiked, checkPassed, checkFaved]);
 
   useEffect(() => {
     const unsubscribeWatched = subscribeWatched(() => {
@@ -195,6 +214,24 @@ export function MovieDetailsScreen({ route, navigation }) {
     } catch (err) {
       setIsWatched(previousState);
       console.warn("Failed to toggle watched:", err.message);
+    }
+  };
+
+  const handleToggleFavoriteHeart = async () => {
+    if (!movie) return;
+    const previousState = isFaved;
+    setIsFaved(!isFaved);
+    try {
+      await toggleFavorite({
+        tmdbId: movie.id,
+        title: movie.title,
+        posterPath: movie.poster_path,
+        rating: movie.vote_average ?? undefined,
+      });
+      checkFaved();
+    } catch (err) {
+      setIsFaved(previousState);
+      console.warn("Failed to toggle favorite:", err.message);
     }
   };
 
@@ -432,6 +469,15 @@ export function MovieDetailsScreen({ route, navigation }) {
                 name="bookmark"
                 size={24}
                 color={isFavorite ? colors.swipe.save : "#fff"}
+              />
+              </Animated.View>
+            </Pressable>
+            <Pressable onPressIn={() => Animated.spring(heartScale, { toValue: 0.8, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPressOut={() => Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPress={handleToggleFavoriteHeart} style={{ marginLeft: 16 }}>
+              <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+              <Feather
+                name="star"
+                size={24}
+                color={isFaved ? colors.favorite : "#fff"}
               />
               </Animated.View>
             </Pressable>

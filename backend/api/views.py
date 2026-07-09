@@ -17,7 +17,7 @@ class PickedMovieViewSet(viewsets.ModelViewSet):
         return PickedMovie.objects.filter(user=self.request.user)
 
     def perform_destroy(self, instance):
-        if instance.is_saved or instance.watched:
+        if instance.is_saved or instance.watched or instance.is_favorite:
             instance.choice = None
             instance.save(update_fields=["choice"])
         else:
@@ -34,6 +34,8 @@ class PickedMovieViewSet(viewsets.ModelViewSet):
             defaults["choice"] = serializer.validated_data["choice"]
         if "is_saved" in serializer.validated_data:
             defaults["is_saved"] = serializer.validated_data["is_saved"]
+        if "is_favorite" in serializer.validated_data:
+            defaults["is_favorite"] = serializer.validated_data["is_favorite"]
         obj, _ = PickedMovie.objects.update_or_create(
             user=self.request.user,
             tmdb_id=tmdb_id,
@@ -83,6 +85,33 @@ class PickedMovieViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=201)
 
     @action(detail=False, methods=['get'])
+    def favorites(self, request):
+        queryset = self.get_queryset().filter(is_favorite=True)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def toggle_favorite(self, request):
+        tmdb_id = request.data.get("tmdb_id")
+        try:
+            pick = PickedMovie.objects.get(user=request.user, tmdb_id=tmdb_id)
+            pick.is_favorite = not pick.is_favorite
+            pick.save(update_fields=["is_favorite"])
+            serializer = self.get_serializer(pick)
+            return Response(serializer.data)
+        except PickedMovie.DoesNotExist:
+            serializer = self.get_serializer(data={
+                "tmdb_id": tmdb_id,
+                "title": request.data.get("title"),
+                "poster_path": request.data.get("poster_path"),
+                "rating": request.data.get("rating"),
+                "is_favorite": True,
+            })
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=201)
+
+    @action(detail=False, methods=['get'])
     def watched(self, request):
         queryset = self.get_queryset().filter(watched=True)
         serializer = self.get_serializer(queryset, many=True)
@@ -109,6 +138,11 @@ class PickedMovieViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def clear_saved(self, request):
         deleted, _ = self.get_queryset().filter(is_saved=True).delete()
+        return Response({"deleted": deleted})
+
+    @action(detail=False, methods=['post'])
+    def clear_favorites(self, request):
+        deleted, _ = self.get_queryset().filter(is_favorite=True).delete()
         return Response({"deleted": deleted})
 
     @action(detail=False, methods=['post'])
@@ -187,6 +221,7 @@ class MeView(generics.GenericAPIView):
         user = request.user
         saved_count = PickedMovie.objects.filter(user=user, is_saved=True).count()
         pass_count = PickedMovie.objects.filter(user=user, choice="pass").count()
+        favorite_count = PickedMovie.objects.filter(user=user, is_favorite=True).count()
         return Response(
             {
                 "id": user.id,
@@ -194,6 +229,7 @@ class MeView(generics.GenericAPIView):
                 "email": user.email,
                 "saved_count": saved_count,
                 "pass_count": pass_count,
+                "favorite_count": favorite_count,
             }
         )
 

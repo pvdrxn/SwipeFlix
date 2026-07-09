@@ -15,7 +15,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { AuthContext } from "../auth/AuthContext";
 import { me, deleteAccount, sendPasswordCode, changePassword, sendEmailCode, changeEmail } from "../api/authApi";
-import { clearLiked, clearDisliked, clearSaved, clearAll } from "../api/picksApi";
+import { clearLiked, clearDisliked, clearSaved, clearFavorites, clearAll } from "../api/picksApi";
 import { colors } from "../theme";
 
 export function SettingsScreen() {
@@ -156,7 +156,14 @@ export function SettingsScreen() {
   function handleClearSaved() {
     confirmClear(
       () => clearSaved().catch(() => {}),
-      "Saved"
+      "Watch Later"
+    );
+  }
+
+  function handleClearFavorites() {
+    confirmClear(
+      () => clearFavorites().catch(() => {}),
+      "Favorites"
     );
   }
 
@@ -272,7 +279,14 @@ export function SettingsScreen() {
               <View style={styles.chipIcon}>
                 <Feather name="bookmark" size={22} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>Delete saved list</Text>
+              <Text style={styles.chipLabel}>Delete watch later list</Text>
+            </Pressable>
+            <View style={styles.chipDivider} />
+            <Pressable style={styles.chip} onPress={handleClearFavorites}>
+              <View style={styles.chipIcon}>
+                <Feather name="star" size={22} color={colors.text.primary} />
+              </View>
+              <Text style={styles.chipLabel}>Delete favorites list</Text>
             </Pressable>
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleResetLibrary}>

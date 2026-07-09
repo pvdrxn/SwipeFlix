@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, Dimensions, Pressable, ScrollView, Anima
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchPopularMovies, fetchGenres, fetchMovieCredits, fetchMovieDetails } from "../services/tmdb";
-import { addPick, getPicks, subscribePicks } from "../api/picksApi";
+import { addPick, getPicks, subscribePicks, toggleFavorite } from "../api/picksApi";
 import { colors } from "../theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -36,8 +36,14 @@ export function PickScreen() {
   const expandedRef = useRef(false);
   const expandAnim = useRef(new Animated.Value(0)).current;
   const synopsisOpacity = useRef(new Animated.Value(0)).current;
+  
+  
+  
 
+  const borderAnim = useRef(new Animated.Value(0)).current;
+  const holdScale = useRef(new Animated.Value(1)).current;
   const pan = useRef(new Animated.ValueXY()).current;
+  const starStamp = useRef({ opacity: new Animated.Value(0), scale: new Animated.Value(0) }).current;
   const isSwiping = useRef(false);
   const rightOverlayOpacity = useRef(new Animated.Value(0)).current;
   const leftOverlayOpacity = useRef(new Animated.Value(0)).current;
@@ -270,10 +276,61 @@ export function PickScreen() {
     }).start();
   }, []);
 
+
+
+  const doubleTapRef = useRef(null);
+
+  const handleDoubleTap = useCallback(() => {
+    const movie = moviesSnapshotRef.current[cardIndexRef.current];
+    if (!movie || isSwiping.current) return;
+    isSwiping.current = true;
+    toggleFavorite({
+      tmdbId: movie.id,
+      title: movie.title,
+      posterPath: movie.poster_path,
+      rating: movie.vote_average ?? undefined,
+    }).catch(() => {});
+    setSavedCount((c) => c + 1);
+    setPickedIds(prev => {
+      const newSet = new Set([...prev, movie.id]);
+      pickedIdsRef.current = newSet;
+      return newSet;
+    });
+    queuedIdsRef.current.delete(movie.id);
+    starStamp.opacity.setValue(1);
+    starStamp.scale.setValue(0);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(borderAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(holdScale, { toValue: 1.05, duration: 300, useNativeDriver: true }),
+        Animated.spring(starStamp.scale, { toValue: 1, damping: 8, stiffness: 250, useNativeDriver: true }),
+      ]),
+      Animated.delay(500),
+      Animated.parallel([
+        Animated.timing(borderAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
+        Animated.timing(holdScale, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(starStamp.opacity, { toValue: 0, duration: 150, useNativeDriver: true }),
+        Animated.timing(starStamp.scale, { toValue: 0.3, duration: 150, useNativeDriver: true }),
+      ]),
+    ]).start(() => {
+      const idx = cardIndexRef.current;
+      pan.setValue({ x: 0, y: 0 });
+      holdScale.setValue(1);
+      rightOverlayOpacity.setValue(0);
+      leftOverlayOpacity.setValue(0);
+      upOverlayOpacity.setValue(0);
+      isSwiping.current = false;
+      setMovies(prev => prev.filter((_, i) => i !== idx));
+      cardIndexRef.current = idx + 1;
+      setCardIndex(idx + 1);
+    });
+  }, [toggleFavorite]);
+
   const finishSwipe = useCallback((direction) => {
     const targetX = direction === "right" ? SCREEN_WIDTH * 2 : -(SCREEN_WIDTH * 2);
     const targetY = direction === "up" ? -(SCREEN_HEIGHT * 2) : 0;
     const wasExpanded = expandedRef.current;
+    const idx = cardIndexRef.current;
     Animated.timing(pan, {
       toValue: { x: direction === "up" ? 0 : targetX, y: targetY },
       duration: 200,
@@ -283,7 +340,6 @@ export function PickScreen() {
       rightOverlayOpacity.setValue(0);
       leftOverlayOpacity.setValue(0);
       upOverlayOpacity.setValue(0);
-      const idx = cardIndexRef.current;
       handleSwiped(direction, idx);
 
       const nextIndex = idx + 1;
@@ -365,55 +421,124 @@ export function PickScreen() {
     })
   ).current;
 
-  const renderCard = useCallback((movie) => {
+  const rightBorderOpacity = pan.x.interpolate({
+    inputRange: [0, SWIPE_THRESHOLD * 0.5],
+    outputRange: [0, 0.8],
+    extrapolate: "clamp",
+  });
+  const leftBorderOpacity = pan.x.interpolate({
+    inputRange: [-SWIPE_THRESHOLD * 0.5, 0],
+    outputRange: [0.8, 0],
+    extrapolate: "clamp",
+  });
+  const upBorderOpacity = pan.y.interpolate({
+    inputRange: [-SWIPE_THRESHOLD * 0.5, 0],
+    outputRange: [0.8, 0],
+    extrapolate: "clamp",
+  });
+
+  const renderCard = useCallback((movie, isCurrent) => {
     if (!movie) return null;
 
     return (
-      <Pressable onPress={toggleSynopsis} style={styles.card}>
-        {movie.poster_path ? (
-          <Image
-            source={{
-              uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-            }}
-            style={styles.cardImage}
-          />
-        ) : (
-          <View style={[styles.cardImage, styles.cardPlaceholder]}>
-            <Text style={styles.placeholderText}>No Image</Text>
-          </View>
-        )}
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.7)"]}
-          locations={[0, 0.22, 1]}
-          style={styles.cardInfo}
-        >
-          <View>
-            <Text style={styles.cardTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.571}>
-              {movie.title}
-            </Text>
-            <Text style={styles.cardYear}>
-              {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` • ${runtimes[movie.id]} min` : ""}
-            </Text>
-          </View>
-          <View style={styles.cardGenres}>
-            {(movie.genre_ids || []).map(id => genreMap[id]).filter(Boolean).map((name, i, arr) => (
-              <React.Fragment key={name}>
-                <Text style={{ color: colors.genre[name] || colors.text.primary, fontSize: 16, fontWeight: "700" }}>
-                  {name}
-                </Text>
-                {i < arr.length - 1 && (
-                  <Text style={{ color: colors.text.primary, fontSize: 16 }}> · </Text>
-                )}
-              </React.Fragment>
-            ))}
-          </View>
-          <View style={styles.cardRatingRow}>
-            <Ionicons name="star" size={22} color={colors.accent} />
-            <Text style={styles.cardRating}>
-              {(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : "N/A"}
-            </Text>
-          </View>
-        </LinearGradient>
+      <Pressable onPress={() => {
+        if (doubleTapRef.current) {
+          clearTimeout(doubleTapRef.current);
+          doubleTapRef.current = null;
+          handleDoubleTap();
+        } else {
+          doubleTapRef.current = setTimeout(() => {
+            doubleTapRef.current = null;
+            toggleSynopsis();
+          }, 300);
+        }
+      }} style={styles.card}>
+        <View style={{ flex: 1, borderRadius: 4, overflow: "hidden" }}>
+          {isCurrent && (
+            <>
+              <Animated.View
+                pointerEvents="none"
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.save,
+                  opacity: rightBorderOpacity, zIndex: 10,
+                }}
+              />
+              <Animated.View
+                pointerEvents="none"
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.pass,
+                  opacity: leftBorderOpacity, zIndex: 10,
+                }}
+              />
+              <Animated.View
+                pointerEvents="none"
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.saved,
+                  opacity: upBorderOpacity, zIndex: 10,
+                }}
+              />
+              <Animated.View
+                pointerEvents="none"
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  borderRadius: 4,
+                  borderWidth: 2,
+                  borderColor: colors.favorite,
+                  opacity: Animated.multiply(borderAnim, 0.9),
+                  zIndex: 11,
+                }}
+              />
+              
+            </>
+          )}
+          {movie.poster_path ? (
+            <Image
+              source={{
+                uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+              }}
+              style={styles.cardImage}
+            />
+          ) : (
+            <View style={[styles.cardImage, styles.cardPlaceholder]}>
+              <Text style={styles.placeholderText}>No Image</Text>
+            </View>
+          )}
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.7)"]}
+            locations={[0, 0.22, 1]}
+            style={styles.cardInfo}
+          >
+            <View>
+              <Text style={styles.cardTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.571}>
+                {movie.title}
+              </Text>
+              <Text style={styles.cardYear}>
+                {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` • ${runtimes[movie.id]} min` : ""}
+              </Text>
+            </View>
+            <View style={styles.cardGenres}>
+              {(movie.genre_ids || []).map(id => genreMap[id]).filter(Boolean).map((name, i, arr) => (
+                <React.Fragment key={name}>
+                  <Text style={{ color: colors.genre[name] || colors.text.primary, fontSize: 16, fontWeight: "700" }}>
+                    {name}
+                  </Text>
+                  {i < arr.length - 1 && (
+                    <Text style={{ color: colors.text.primary, fontSize: 16 }}> · </Text>
+                  )}
+                </React.Fragment>
+              ))}
+            </View>
+            <View style={styles.cardRatingRow}>
+              <Ionicons name="star" size={22} color={colors.accent} />
+              <Text style={styles.cardRating}>
+                {(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : "N/A"}
+              </Text>
+            </View>
+          </LinearGradient>
+        </View>
       </Pressable>
     );
   }, [genreMap, directors, toggleSynopsis]);
@@ -440,6 +565,9 @@ export function PickScreen() {
   const topCard = movies[cardIndex];
   const nextCard = movies[cardIndex + 1];
 
+  const cardCenterX = SCREEN_WIDTH / 2;
+  const cardCenterY = 25 + 30 + 14 + 20 + (CARD_HEIGHT / 2) + 25;
+
   const cardRotate = pan.x.interpolate({
     inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
     outputRange: ["-15deg", "0deg", "15deg"],
@@ -448,17 +576,19 @@ export function PickScreen() {
 
   return (
     <View style={styles.container}>
-      <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.save, opacity: rightOverlayOpacity }]} />
+<Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.save, opacity: rightOverlayOpacity }]} />
       <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.pass, opacity: leftOverlayOpacity }]} />
       <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.saved, opacity: upOverlayOpacity }]} />
+      <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.favorite, opacity: Animated.multiply(borderAnim, 0.7) }]} />
       <View style={{ alignItems: "center", paddingBottom: 120 }}>
       <Text style={[styles.subtitle, { marginTop: 30 }]}>
-        <Text style={{ color: colors.swipe.pass }}>Left to dislike</Text> · <Text style={{ color: colors.swipe.save }}>Right to like</Text> · <Text style={{ color: colors.swipe.saved }}>Up to save</Text>
+        <Text style={{ color: colors.swipe.pass }}>Left to dislike</Text> · <Text style={{ color: colors.swipe.saved }}>Up to watch later</Text> · <Text style={{ color: colors.swipe.save }}>Right to like</Text>
       </Text>
-      <Text style={{ color: colors.text.primary, fontSize: 13, marginTop: -20 }}>tap for synopsis</Text>
+      <Text style={{ fontSize: 13, marginTop: -20 }}><Text style={{ color: colors.text.primary }}>tap for synopsis</Text><Text style={{ color: colors.text.primary }}> · </Text><Text style={{ color: colors.favorite }}>double tap to favorite</Text></Text>
 
       {movies.length > 0 && (
-        <Animated.View style={[styles.swiperContainer, { transform: [{ translateY: expandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -100] }) }] }]}>
+        <Animated.View
+          style={[styles.swiperContainer, { transform: [{ translateY: expandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -100] }) }] }]}>
           <View style={styles.cardStack}>
             {nextCard && (
               <Animated.View
@@ -471,7 +601,7 @@ export function PickScreen() {
                   },
                 ]}
               >
-                {renderCard(nextCard)}
+                {renderCard(nextCard, false)}
               </Animated.View>
             )}
             {topCard && (
@@ -483,12 +613,13 @@ export function PickScreen() {
                       { translateX: pan.x },
                       { translateY: pan.y },
                       { rotate: cardRotate },
+                      { scale: holdScale },
                     ],
                   },
                 ]}
                 {...panResponder.panHandlers}
               >
-                {renderCard(topCard)}
+                {renderCard(topCard, true)}
               </Animated.View>
             )}
           </View>
@@ -512,6 +643,18 @@ export function PickScreen() {
           <Text style={styles.synopsisText} numberOfLines={8} adjustsFontSizeToFit minimumFontScale={0.7}>{topCard.overview}</Text>
         </Animated.View>
       )}
+
+      <Animated.View pointerEvents="none" style={{
+        position: "absolute", top: 0, left: 0, right: 0, bottom: 120,
+        justifyContent: "center", alignItems: "center", zIndex: 60,
+        opacity: starStamp.opacity,
+        transform: [
+          { scale: starStamp.scale },
+          { translateY: expandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -100] }) },
+        ],
+      }}>
+        <Ionicons name="star" size={90} color="#FBBF24" />
+      </Animated.View>
 
       </View>
       {noMoreMovies && movies.length > 0 && (
