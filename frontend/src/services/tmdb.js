@@ -1,5 +1,27 @@
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
+const ASIAN_LANGUAGES = new Set(["ja", "ko", "zh", "th", "vi"]);
+const ASIAN_ADULT_KEYWORDS = [
+  "av", "jav", "erotic", "porn", "hardcore", "bdsm", "orgy",
+  "slut", "whore", "milf", "incest", "fetish", "nude", "xxx",
+  "lesbian", "seduction",
+];
+const ADULT_PROD_CODE = /\b[A-Z]{2,6}-\d{2,5}\b/;
+const ANIMATION_GENRE_ID = 16;
+
+function isAsianAdultMovie(m) {
+  if (!ASIAN_LANGUAGES.has(m.original_language)) return false;
+  if (m.genre_ids && m.genre_ids.includes(ANIMATION_GENRE_ID)) return false;
+
+  for (const kw of ASIAN_ADULT_KEYWORDS) {
+    const re = new RegExp(`\\b${kw}\\b`, "i");
+    if (re.test(m.title) || re.test(m.original_title)) return true;
+  }
+  if (ADULT_PROD_CODE.test(m.title) || ADULT_PROD_CODE.test(m.original_title)) return true;
+
+  return false;
+}
+
 const LANGUAGE_MAP = { en: "en-US", es: "es-ES", ru: "ru-RU" };
 let currentLang = "en-US";
 
@@ -61,7 +83,7 @@ async function tmdbFetch(path, params = {}) {
 
   const data = await res.json();
   if (data.results && Array.isArray(data.results)) {
-    data.results = data.results.filter(m => !m.adult);
+    data.results = data.results.filter(m => !m.adult && !isAsianAdultMovie(m));
   }
   return data;
 }
@@ -132,6 +154,11 @@ export async function discoverMovies({ genreId, startYear, endYear, rating, page
   if (endYear) params["primary_release_date.lte"] = `${endYear}-12-31`;
   if (rating) params["vote_average.gte"] = rating;
   return tmdbFetch("/discover/movie", params);
+}
+
+export async function fetchMovieRecommendations(movieId, { page = 1 } = {}) {
+  if (!movieId) throw new Error("movieId is required");
+  return tmdbFetch(`/movie/${movieId}/recommendations`, { page });
 }
 
 export async function searchMovies(query, { page = 1 } = {}) {

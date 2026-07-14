@@ -69,7 +69,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'movie_picker'),
+        'NAME': os.getenv('DB_NAME', 'swipeflix'),
         'USER': os.getenv('DB_USER', 'admin'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'admin123'),
         'HOST': os.getenv('DB_HOST', 'localhost'),

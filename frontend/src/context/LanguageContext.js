@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { t as translate } from "../i18n";
 import { setTmdbLanguage } from "../services/tmdb";
 
-const LANGUAGE_KEY = "@moviepicker_language";
+const LANGUAGE_KEY = "@swipeflix_language";
 
 export const LanguageContext = createContext({
   language: "en",

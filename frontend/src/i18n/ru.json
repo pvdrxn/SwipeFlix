@@ -8,7 +8,8 @@
     "refreshing": "Обновление...",
     "loading": "Загрузка...",
     "error": "Ошибка: ",
-    "retry": "Повторить"
+    "retry": "Повторить",
+    "becauseYouLiked": "Потому что вам понравился {title}"
   },
   "categories": {
     "popular": "Популярные",
@@ -58,7 +59,9 @@
     "manageAccount": "УПРАВЛЕНИЕ АККАУНТОМ",
     "changePassword": "Сменить пароль",
     "changeEmail": "Сменить почту",
-    "deleteAccount": "Удалить аккаунт"
+    "deleteAccount": "Удалить аккаунт",
+    "appearance": "ВНЕШНИЙ ВИД",
+    "darkMode": "Тёмный режим"
   },
   "modal": {
     "cancel": "Отмена",

@@ -1,4 +1,4 @@
-# Movie Picker - Agent Instructions
+# SwipeFlix - Agent Instructions
 
 ## Important Rules
 - **Always confirm with the user before importing any new packages or libraries into the project.**

@@ -1,19 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Animated } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { MovieCard } from "../components/MovieCard";
 import { useNavigation } from "@react-navigation/native";
 import { getPicks, subscribePicks, subscribeWatched, getWatchedPicks, getFavorites, subscribeFavorites } from "../api/picksApi";
-import { colors } from "../theme";
+import { useTheme } from "../theme";
 import { fetchMovieDetails } from "../services/tmdb";
 import { LanguageContext } from "../context/LanguageContext";
-
-const CHIP_COLORS = {
-  liked: colors.swipe.save,
-  pass: colors.swipe.pass,
-  watchlater: colors.swipe.saved,
-  favorites: colors.favorite,
-};
 
 const CHIP_ICONS = {
   liked: "thumbs-up",
@@ -31,7 +24,88 @@ const CHIPS = [
 
 export function LibraryScreen() {
   const { language, t } = useContext(LanguageContext);
+  const { colors } = useTheme();
   const navigation = useNavigation();
+
+  const CHIP_COLORS = {
+    liked: colors.swipe.save,
+    pass: colors.swipe.pass,
+    watchlater: colors.swipe.saved,
+    favorites: colors.favorite,
+  };
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg.primary,
+      paddingTop: 50,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      marginBottom: 12,
+    },
+    title: {
+      color: colors.text.primary,
+      fontSize: 28,
+      fontWeight: "800",
+    },
+    chipsRow: {
+      flexDirection: "row",
+      paddingHorizontal: 16,
+      marginBottom: 16,
+      gap: 8,
+    },
+    chip: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    chipContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    chipText: {
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    centered: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    loadingText: {
+      color: colors.text.tertiary,
+      fontSize: 16,
+    },
+    errorText: {
+      color: colors.accentSecondary,
+      fontSize: 16,
+    },
+    emptyText: {
+      color: colors.text.secondary,
+      fontSize: 18,
+      fontWeight: "600",
+      marginBottom: 8,
+    },
+    emptySubtext: {
+      color: colors.text.tertiary,
+      fontSize: 14,
+    },
+    movieItem: {
+      flex: 1,
+      paddingHorizontal: 4,
+      maxWidth: "50%",
+    },
+    listContent: {
+      paddingHorizontal: 8,
+      paddingBottom: 24,
+    },
+  }), [colors]);
+
   const [selectedChip, setSelectedChip] = useState("watchlater");
   const [movies, setMovies] = useState([]);
   const [counts, setCounts] = useState({ liked: 0, pass: 0, watchlater: 0, favorites: 0 });
@@ -233,74 +307,4 @@ export function LibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg.primary,
-    paddingTop: 50,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  title: {
-    color: colors.text.primary,
-    fontSize: 28,
-    fontWeight: "800",
-  },
-  chipsRow: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  chipContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    color: colors.text.tertiary,
-    fontSize: 16,
-  },
-  errorText: {
-    color: colors.accentSecondary,
-    fontSize: 16,
-  },
-  emptyText: {
-    color: colors.text.secondary,
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    color: colors.text.tertiary,
-    fontSize: 14,
-  },
-  movieItem: {
-    flex: 1,
-    paddingHorizontal: 4,
-    maxWidth: "50%",
-  },
-  listContent: {
-    paddingHorizontal: 8,
-    paddingBottom: 24,
-  },
-});
+

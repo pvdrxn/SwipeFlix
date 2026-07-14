@@ -1,20 +1,21 @@
-import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
+import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, Pressable, ScrollView, Animated, PanResponder, Modal } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchPopularMovies, fetchGenres, fetchMovieCredits, fetchMovieDetails } from "../services/tmdb";
 import { addPick, getPicks, subscribePicks, toggleFavorite } from "../api/picksApi";
-import { colors } from "../theme";
+import { useTheme } from "../theme";
 import { LanguageContext } from "../context/LanguageContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const SWIPE_THRESHOLD = 125;
 
-const CARD_WIDTH = SCREEN_WIDTH - 48;
-const CARD_HEIGHT = CARD_WIDTH * 1.5;
+const CARD_WIDTH = SCREEN_WIDTH - 20;
+const CARD_HEIGHT = SCREEN_HEIGHT - 200;
 
 export function PickScreen() {
+  const { colors } = useTheme();
   const { language, t } = useContext(LanguageContext);
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,9 +36,7 @@ export function PickScreen() {
   const loadingRef = useRef(false);
   const queuedIdsRef = useRef(new Set());
   const moviesSnapshotRef = useRef([]);
-  const [isExpanded, setIsExpanded] = useState(false);
   const expandedRef = useRef(false);
-  const expandAnim = useRef(new Animated.Value(0)).current;
   const synopsisOpacity = useRef(new Animated.Value(0)).current;
   
   
@@ -54,24 +53,14 @@ export function PickScreen() {
 
   const backCardScale = useRef(
     Animated.add(
-      new Animated.Value(0.9),
+      new Animated.Value(0.85),
       Animated.multiply(
-        new Animated.Value(0.1),
-        Animated.subtract(
-          new Animated.Value(1),
-          Animated.multiply(
-            Animated.subtract(new Animated.Value(1), pan.x.interpolate({
-              inputRange: [-SWIPE_THRESHOLD, 0, SWIPE_THRESHOLD],
-              outputRange: [1, 0, 1],
-              extrapolate: "clamp",
-            })),
-            Animated.subtract(new Animated.Value(1), pan.y.interpolate({
-              inputRange: [-SWIPE_THRESHOLD, 0],
-              outputRange: [1, 0],
-              extrapolate: "clamp",
-            })),
-          ),
-        ),
+        new Animated.Value(0.15),
+        pan.x.interpolate({
+          inputRange: [-SWIPE_THRESHOLD, 0, SWIPE_THRESHOLD],
+          outputRange: [1, 0, 1],
+          extrapolate: "clamp",
+        }),
       ),
     )
   ).current;
@@ -87,7 +76,7 @@ export function PickScreen() {
       const raw = data.results || [];
       const newMovies = raw.filter(
         m => !pickedIdsRef.current.has(m.id) && !queuedIdsRef.current.has(m.id)
-      );
+      ).sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
       if (reset) {
         queuedIdsRef.current = new Set(newMovies.map(m => m.id));
       } else {
@@ -193,7 +182,7 @@ export function PickScreen() {
     if (movies.length > 0) {
       for (let i = 0; i < Math.min(5, movies.length); i++) {
         const posterUrl = movies[i].poster_path
-          ? `https://image.tmdb.org/t/p/w500${movies[i].poster_path}`
+          ? `https://image.tmdb.org/t/p/original${movies[i].poster_path}`
           : null;
         if (posterUrl) Image.prefetch(posterUrl);
       }
@@ -208,7 +197,7 @@ export function PickScreen() {
       const movie = movies[cardIndex + i];
       if (movie) {
         const posterUrl = movie.poster_path
-          ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+          ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
           : null;
         if (posterUrl) Image.prefetch(posterUrl);
         if (!fetchedDirectors.current.has(movie.id)) {
@@ -239,9 +228,7 @@ export function PickScreen() {
         stiffness: 80,
       }).start();
     } else {
-      expandAnim.setValue(0);
       synopsisOpacity.setValue(0);
-      setIsExpanded(false);
       expandedRef.current = false;
     }
   }, [cardIndex]);
@@ -286,17 +273,8 @@ export function PickScreen() {
   const toggleSynopsis = useCallback(() => {
     const toValue = expandedRef.current ? 0 : 1;
     expandedRef.current = !expandedRef.current;
-    setIsExpanded(toValue === 1);
-    Animated.spring(expandAnim, {
-      toValue,
-      delay: toValue === 0 ? 200 : 0,
-      useNativeDriver: true,
-      damping: 18,
-      stiffness: 150,
-    }).start();
     Animated.spring(synopsisOpacity, {
       toValue,
-      delay: toValue === 1 ? 200 : 0,
       useNativeDriver: true,
       damping: 12,
       stiffness: 80,
@@ -524,7 +502,7 @@ export function PickScreen() {
           {movie.poster_path ? (
             <Image
               source={{
-                uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+                uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
               }}
               style={styles.cardImage}
             />
@@ -535,7 +513,7 @@ export function PickScreen() {
           )}
           <LinearGradient
             colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.7)"]}
-            locations={[0, 0.22, 1]}
+            locations={[0, 0.12, 1]}
             style={styles.cardInfo}
           >
             <View>
@@ -565,12 +543,227 @@ export function PickScreen() {
               </Text>
             </View>
           </LinearGradient>
+          {isCurrent && (
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                borderRadius: 4,
+                backgroundColor: "rgba(0,0,0,0.65)",
+                justifyContent: "center",
+                alignItems: "center",
+                paddingHorizontal: 20,
+                opacity: synopsisOpacity,
+                zIndex: 20,
+              }}
+            >
+              <Text style={styles.synopsisText} numberOfLines={12} adjustsFontSizeToFit minimumFontScale={0.7}>
+                {movie.overview || "No synopsis available"}
+              </Text>
+            </Animated.View>
+          )}
         </View>
       </Pressable>
     );
-  }, [genreMap, directors, toggleSynopsis]);
+  }, [genreMap, directors, toggleSynopsis, colors]);
 
   moviesSnapshotRef.current = movies;
+
+  const styles = useMemo(() => StyleSheet.create({
+  synopsisText: {
+    color: colors.text.primary,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  swipeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg.primary,
+    alignItems: "center",
+    paddingTop: 0,
+    paddingHorizontal: 0,
+  },
+  title: {
+    color: colors.text.primary,
+    fontSize: 28,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+  subtitle: {
+    color: colors.text.tertiary,
+    fontSize: 14,
+    marginBottom: 24,
+  },
+  loadingText: {
+    color: colors.text.tertiary,
+    fontSize: 16,
+  },
+  errorText: {
+    color: colors.accentSecondary,
+    fontSize: 16,
+  },
+  swiperContainer: {
+    height: CARD_HEIGHT + 40,
+    width: SCREEN_WIDTH,
+    alignItems: "center",
+    marginTop: 70,
+    zIndex: 2,
+  },
+  cardStack: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardStackBack: {
+    position: "absolute",
+  },
+  cardStackFront: {
+    position: "absolute",
+  },
+  card: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    borderRadius: 4,
+    backgroundColor: "transparent",
+  },
+  cardImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    overflow: "hidden",
+    borderRadius: 4,
+  },
+  cardPlaceholder: {
+    backgroundColor: colors.bg.elevated,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 4,
+  },
+  placeholderText: {
+    color: colors.text.tertiary,
+    fontSize: 16,
+  },
+  cardInfo: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    paddingTop: 12,
+    minHeight: 120,
+    justifyContent: "flex-end",
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+  },
+  cardTitle: {
+    color: colors.text.primary,
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  cardYear: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    fontWeight: "700",
+    flexShrink: 0,
+  },
+  cardGenres: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  cardDirector: {
+    color: colors.text.primary,
+    fontSize: 15,
+  },
+  cardRatingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+    alignSelf: "flex-end",
+  },
+  cardRating: {
+    fontSize: 26,
+    fontWeight: "600",
+    color: colors.accent,
+  },
+  doneOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.bg.primary,
+    zIndex: 10,
+  },
+  doneText: {
+    color: colors.text.primary,
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  pickedCount: {
+    color: colors.text.secondary,
+    fontSize: 16,
+    marginBottom: 24,
+  },
+  resetButton: {
+    backgroundColor: colors.bg.elevated,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  resetText: {
+    color: colors.text.primary,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  infoButton: {
+    position: "absolute",
+    top: 75,
+    right: 17,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.bg.overlay,
+  },
+  infoModalContent: {
+    width: "80%",
+    backgroundColor: colors.bg.modal,
+    borderRadius: 16,
+    padding: 24,
+  },
+  infoModalTitle: {
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  infoModalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  infoDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 8,
+  },
+}), [colors]);
 
   if (loading && movies.length === 0) {
     return (
@@ -617,7 +810,7 @@ export function PickScreen() {
 
       {movies.length > 0 && (
         <Animated.View
-          style={[styles.swiperContainer, { transform: [{ translateY: expandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -100] }) }] }]}>
+          style={styles.swiperContainer}>
           <View style={styles.cardStack}>
             {nextCard && (
               <Animated.View
@@ -655,34 +848,15 @@ export function PickScreen() {
         </Animated.View>
       )}
 
-      {topCard?.overview && (
-        <Animated.View
-          style={{
-            opacity: synopsisOpacity,
-            width: SCREEN_WIDTH - 60,
-            paddingVertical: 20,
-            borderBottomLeftRadius: 16,
-            borderBottomRightRadius: 16,
-            overflow: "hidden",
-            backgroundColor: "transparent",
-            alignSelf: "center",
-            transform: [{ translateY: -135 }],
-          }}
-        >
-          <Text style={styles.synopsisText} numberOfLines={8} adjustsFontSizeToFit minimumFontScale={0.7}>{topCard.overview}</Text>
-        </Animated.View>
-      )}
-
       <Animated.View pointerEvents="none" style={{
         position: "absolute", top: 0, left: 0, right: 0, bottom: 120,
         justifyContent: "center", alignItems: "center", zIndex: 60,
         opacity: starStamp.opacity,
         transform: [
           { scale: starStamp.scale },
-          { translateY: expandAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -100] }) },
         ],
       }}>
-        <Ionicons name="star" size={90} color="#FBBF24" />
+        <Ionicons name="star" size={90} color={colors.favorite} />
       </Animated.View>
 
       </View>
@@ -745,207 +919,3 @@ export function PickScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  synopsisText: {
-    color: colors.text.primary,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: "center",
-  },
-  swipeOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg.primary,
-    alignItems: "center",
-    paddingTop: 25,
-    paddingHorizontal: 0,
-  },
-  title: {
-    color: colors.text.primary,
-    fontSize: 28,
-    fontWeight: "800",
-    marginBottom: 4,
-  },
-  subtitle: {
-    color: colors.text.tertiary,
-    fontSize: 14,
-    marginBottom: 24,
-  },
-  loadingText: {
-    color: colors.text.tertiary,
-    fontSize: 16,
-  },
-  errorText: {
-    color: colors.accentSecondary,
-    fontSize: 16,
-  },
-  swiperContainer: {
-    height: CARD_HEIGHT + 40,
-    width: SCREEN_WIDTH,
-    alignItems: "center",
-    marginTop: 132,
-    zIndex: 2,
-  },
-  cardStack: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardStackBack: {
-    position: "absolute",
-  },
-  cardStackFront: {
-    position: "absolute",
-  },
-  card: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: 4,
-    backgroundColor: "transparent",
-  },
-  cardImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-    overflow: "hidden",
-    borderRadius: 4,
-  },
-  cardPlaceholder: {
-    backgroundColor: colors.bg.elevated,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 4,
-  },
-  placeholderText: {
-    color: colors.text.tertiary,
-    fontSize: 16,
-  },
-  cardInfo: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    paddingBottom: 0,
-    paddingTop: 15,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
-  },
-  cardTitle: {
-    color: colors.text.primary,
-    fontSize: 28,
-    fontWeight: "700",
-    top: -5,
-    left: -5,
-  },
-  cardYear: {
-    color: colors.text.secondary,
-    fontSize: 16,
-    fontWeight: "700",
-    marginLeft: 0,
-    top: -5,
-    right: 4,
-    flexShrink: 0,
-  },
-  cardGenres: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    top: -5,
-    left: -3,
-  },
-  cardDirector: {
-    color: colors.text.primary,
-    fontSize: 15,
-    top: -5,
-    left: -3,
-  },
-  cardRatingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 4,
-    top: -10,
-    alignSelf: "flex-end",
-  },
-  cardRating: {
-    fontSize: 26,
-    fontWeight: "600",
-    color: colors.accent,
-  },
-  doneOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.bg.primary,
-    zIndex: 10,
-  },
-  doneText: {
-    color: colors.text.primary,
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  pickedCount: {
-    color: colors.text.secondary,
-    fontSize: 16,
-    marginBottom: 24,
-  },
-  resetButton: {
-    backgroundColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  resetText: {
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  infoButton: {
-    position: "absolute",
-    top: 25,
-    right: 17,
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 0,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.75)",
-  },
-  infoModalContent: {
-    width: "80%",
-    backgroundColor: "#1a1a2e",
-    borderRadius: 16,
-    padding: 24,
-  },
-  infoModalTitle: {
-    color: colors.text.primary,
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  infoModalRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 14,
-  },
-  infoDivider: {
-    height: 1,
-    backgroundColor: "#444",
-    marginVertical: 8,
-  },
-});

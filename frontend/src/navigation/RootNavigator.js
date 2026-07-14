@@ -12,7 +12,7 @@ import { PickScreen } from "../screens/PickScreen";
 import { LibraryScreen } from "../screens/LibraryScreen";
 import { MovieDetailsScreen } from "../screens/MovieDetailsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
-import { colors } from "../theme";
+import { useTheme } from "../theme";
 import { Feather } from "@expo/vector-icons";
 import { ActivityIndicator, View, Animated, Pressable, Dimensions } from "react-native";
 import { withFadeTransition } from "../components/AnimatedScreen";
@@ -22,6 +22,7 @@ const AppNav = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function Splash() {
+  const { colors } = useTheme();
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg.primary }}>
       <ActivityIndicator />
@@ -74,6 +75,7 @@ function TabItem({ route, isFocused, color, onPress }) {
 }
 
 function CustomTabBar({ state, descriptors, navigation }) {
+  const { colors } = useTheme();
   const indicatorPos = useRef(new Animated.Value(0)).current;
   const indicatorScale = useRef(new Animated.Value(1)).current;
   const prevIndex = useRef(0);
@@ -81,6 +83,27 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
   const selectedIndex = state.index;
   const tabCount = state.routes.length;
+
+  const tabBarContainerStyle = {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    alignItems: "center",
+  };
+
+  const tabBarStyle = {
+    backgroundColor: colors.bg.tab,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    height: 56,
+    justifyContent: "center",
+    width: "100%",
+  };
 
   useEffect(() => {
     if (barWidth === 0) return;
@@ -156,27 +179,6 @@ function CustomTabBar({ state, descriptors, navigation }) {
   );
 }
 
-const tabBarContainerStyle = {
-  position: "absolute",
-  bottom: 20,
-  left: 20,
-  right: 20,
-  alignItems: "center",
-};
-
-const tabBarStyle = {
-  backgroundColor: "#242424",
-  borderRadius: 30,
-  elevation: 8,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.3,
-  shadowRadius: 8,
-  height: 56,
-  justifyContent: "center",
-  width: "100%",
-};
-
 function MoviesTabs() {
   return (
     <Tab.Navigator
@@ -194,6 +196,7 @@ function MoviesTabs() {
 }
 
 function AppStack() {
+  const { colors } = useTheme();
   return (
     <AppNav.Navigator
       screenOptions={{
@@ -239,6 +242,7 @@ function AppStack() {
 export function RootNavigator() {
   const { isBootstrapping, isSignedIn } = useContext(AuthContext);
   const { t } = useContext(LanguageContext);
+  const { colors } = useTheme();
 
   if (isBootstrapping) return <Splash />;
 

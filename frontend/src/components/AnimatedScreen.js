@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Animated, View } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
-import { colors } from "../theme";
+import { useTheme } from "../theme";
 
 export function withFadeTransition(WrappedComponent) {
   return function AnimatedScreen(props) {
+    const { colors } = useTheme();
     const isFocused = useIsFocused();
     const opacity = useRef(new Animated.Value(1)).current;
 

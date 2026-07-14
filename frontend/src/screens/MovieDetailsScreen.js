@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { View, Text, Image, StyleSheet, ScrollView, Pressable, Dimensions, Animated } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchMovieDetails, fetchMovieCredits, fetchMovieWatchProviders, fetchMovieTrailer, fetchMovieReleaseDates } from "../services/tmdb";
 import { addPick, deletePick, getPicks, subscribePicks, subscribeWatched, getWatchedPicks, toggleWatched, toggleSave, toggleFavorite, getFavorites, subscribeFavorites } from "../api/picksApi";
-import { colors } from "../theme";
+import { useTheme } from "../theme";
 import { LanguageContext } from "../context/LanguageContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -13,6 +13,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 export function MovieDetailsScreen({ route, navigation }) {
   const { movieId, initialMovieData } = route.params;
   const { t } = useContext(LanguageContext);
+  const { colors } = useTheme();
   const [movie, setMovie] = useState(initialMovieData || null);
   const [credits, setCredits] = useState(null);
   const [watchProviders, setWatchProviders] = useState(null);
@@ -292,6 +293,262 @@ export function MovieDetailsScreen({ route, navigation }) {
     return ratings;
   };
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg.primary,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    stickyHeader: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      paddingTop: 35,
+      paddingHorizontal: 10,
+      zIndex: 10,
+    },
+    stickyActions: {
+      flexDirection: "column",
+      alignItems: "flex-end",
+    },
+    topBarPlaceholder: {
+      height: 90,
+    },
+    backButton: {
+      width: 45,
+      height: 45,
+      borderRadius: 45,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: -10,
+    },
+    header: {
+      flexDirection: "row",
+      padding: 16,
+      paddingTop: 0,
+      marginTop: 0,
+    },
+    poster: {
+      width: 120,
+      height: 180,
+      borderRadius: 8,
+    },
+    posterPlaceholder: {
+      backgroundColor: colors.bg.elevated,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    posterInitials: {
+      color: colors.text.tertiary,
+      fontSize: 32,
+      fontWeight: "700",
+    },
+    headerInfo: {
+      flex: 1,
+      marginLeft: 16,
+      justifyContent: "center",
+    },
+    title: {
+      color: colors.text.primary,
+      fontSize: 22,
+      fontWeight: "800",
+      marginBottom: 4,
+      flexShrink: 1,
+    },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      marginBottom: 4,
+    },
+    rating: {
+      color: colors.accent,
+      fontSize: 18,
+      fontWeight: "600",
+    },
+    meta: {
+      color: colors.text.secondary,
+      fontSize: 14,
+      marginBottom: 10,
+    },
+    metaDir: {
+      color: colors.text.tertiary,
+      fontSize: 13,
+      marginBottom: 10,
+    },
+    genresRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+    },
+    genreText: {
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    genreSeparator: {
+      color: colors.text.tertiary,
+      fontSize: 12,
+    },
+    ratingsContainer: {
+      flexDirection: "row",
+      marginLeft: 8,
+      alignSelf: "center",
+      marginBottom: 4,
+    },
+    ratingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 10,
+    },
+    ratingBadge: {
+      backgroundColor: colors.bg.elevated,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 4,
+      marginRight: 6,
+      marginTop: 4,
+    },
+    ratingBadgeText: {
+      color: colors.text.primary,
+      fontSize: 11,
+      fontWeight: "600",
+    },
+    section: {
+      padding: 16,
+      paddingTop: 8,
+    },
+    sectionTitle: {
+      color: colors.text.primary,
+      fontSize: 18,
+      fontWeight: "700",
+      marginBottom: 12,
+    },
+    backdropContainer: {
+      position: "relative",
+      width: "100%",
+      height: 280,
+    },
+    backdropImage: {
+      width: "100%",
+      height: "100%",
+    },
+    backdropOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.bg.overlay,
+    },
+    backdropBottomFade: {
+      position: "absolute",
+      bottom: -1,
+      left: 0,
+      right: 0,
+      height: 120,
+    },
+    backdropContent: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    tagline: {
+      color: colors.text.tertiary,
+      fontSize: 15,
+      fontStyle: "italic",
+      lineHeight: 22,
+    },
+    synopsis: {
+      color: colors.text.secondary,
+      fontSize: 14,
+      lineHeight: 22,
+    },
+    castScroll: {
+      flexDirection: "row",
+    },
+    castItem: {
+      width: 90,
+      marginRight: 12,
+      alignItems: "center",
+    },
+    castImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.bg.elevated,
+    },
+    castPlaceholder: {
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    castInitials: {
+      color: colors.text.tertiary,
+      fontSize: 24,
+      fontWeight: "600",
+    },
+    castName: {
+      color: colors.text.primary,
+      fontSize: 12,
+      fontWeight: "600",
+      marginTop: 6,
+      textAlign: "center",
+    },
+    castCharacter: {
+      color: colors.text.tertiary,
+      fontSize: 10,
+      textAlign: "center",
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    loadingText: {
+      color: colors.text.tertiary,
+      fontSize: 16,
+      textAlign: "center",
+    },
+    errorText: {
+      color: colors.accentSecondary,
+      fontSize: 16,
+      textAlign: "center",
+    },
+    providerScroll: {
+      flexDirection: "row",
+    },
+    providerItem: {
+      alignItems: "center",
+      marginRight: 16,
+      width: 70,
+    },
+    providerLogo: {
+      width: 50,
+      height: 50,
+      borderRadius: 8,
+      backgroundColor: colors.bg.elevated,
+    },
+    providerName: {
+      color: colors.text.secondary,
+      fontSize: 10,
+      textAlign: "center",
+      marginTop: 4,
+    },
+    noProvidersText: {
+      color: colors.text.tertiary,
+      fontSize: 14,
+      fontStyle: "italic",
+    },
+  }), [colors]);
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -509,259 +766,3 @@ export function MovieDetailsScreen({ route, navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg.primary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  stickyHeader: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    paddingTop: 35,
-    paddingHorizontal: 10,
-    zIndex: 10,
-  },
-  stickyActions: {
-    flexDirection: "column",
-    alignItems: "flex-end",
-  },
-  topBarPlaceholder: {
-    height: 90,
-  },
-  backButton: {
-    width: 45,
-    height: 45,
-    borderRadius: 45,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: -10,
-  },
-  header: {
-    flexDirection: "row",
-    padding: 16,
-    paddingTop: 0,
-    marginTop: 0,
-  },
-  poster: {
-    width: 120,
-    height: 180,
-    borderRadius: 8,
-  },
-  posterPlaceholder: {
-    backgroundColor: colors.bg.elevated,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  posterInitials: {
-    color: colors.text.tertiary,
-    fontSize: 32,
-    fontWeight: "700",
-  },
-  headerInfo: {
-    flex: 1,
-    marginLeft: 16,
-    justifyContent: "center",
-  },
-  title: {
-    color: colors.text.primary,
-    fontSize: 22,
-    fontWeight: "800",
-    marginBottom: 4,
-    flexShrink: 1,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    marginBottom: 4,
-  },
-  rating: {
-    color: colors.accent,
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  meta: {
-    color: colors.text.secondary,
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  metaDir: {
-    color: colors.text.tertiary,
-    fontSize: 13,
-    marginBottom: 10,
-  },
-  genresRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  genreText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  genreSeparator: {
-    color: colors.text.tertiary,
-    fontSize: 12,
-  },
-  ratingsContainer: {
-    flexDirection: "row",
-    marginLeft: 8,
-    alignSelf: "center",
-    marginBottom: 4,
-  },
-  ratingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  ratingBadge: {
-    backgroundColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-    marginRight: 6,
-    marginTop: 4,
-  },
-  ratingBadgeText: {
-    color: colors.text.primary,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  section: {
-    padding: 16,
-    paddingTop: 8,
-  },
-  sectionTitle: {
-    color: colors.text.primary,
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  backdropContainer: {
-    position: "relative",
-    width: "100%",
-    height: 280,
-  },
-  backdropImage: {
-    width: "100%",
-    height: "100%",
-  },
-  backdropOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.55)",
-  },
-  backdropBottomFade: {
-    position: "absolute",
-    bottom: -1,
-    left: 0,
-    right: 0,
-    height: 120,
-  },
-  backdropContent: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  tagline: {
-    color: colors.text.tertiary,
-    fontSize: 15,
-    fontStyle: "italic",
-    lineHeight: 22,
-  },
-  synopsis: {
-    color: colors.text.secondary,
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  castScroll: {
-    flexDirection: "row",
-  },
-  castItem: {
-    width: 90,
-    marginRight: 12,
-    alignItems: "center",
-  },
-  castImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.bg.elevated,
-  },
-  castPlaceholder: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  castInitials: {
-    color: colors.text.tertiary,
-    fontSize: 24,
-    fontWeight: "600",
-  },
-  castName: {
-    color: colors.text.primary,
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 6,
-    textAlign: "center",
-  },
-  castCharacter: {
-    color: colors.text.tertiary,
-    fontSize: 10,
-    textAlign: "center",
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    color: colors.text.tertiary,
-    fontSize: 16,
-    textAlign: "center",
-  },
-  errorText: {
-    color: colors.accentSecondary,
-    fontSize: 16,
-    textAlign: "center",
-  },
-  providerScroll: {
-    flexDirection: "row",
-  },
-  providerItem: {
-    alignItems: "center",
-    marginRight: 16,
-    width: 70,
-  },
-  providerLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    backgroundColor: colors.bg.elevated,
-  },
-  providerName: {
-    color: colors.text.secondary,
-    fontSize: 10,
-    textAlign: "center",
-    marginTop: 4,
-  },
-  noProvidersText: {
-    color: colors.text.tertiary,
-    fontSize: 14,
-    fontStyle: "italic",
-  },
-});

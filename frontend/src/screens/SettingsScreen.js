@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import React, { useContext, useEffect, useMemo, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -11,17 +11,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Switch,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { AuthContext } from "../auth/AuthContext";
 import { me, deleteAccount, sendPasswordCode, changePassword, sendEmailCode, changeEmail } from "../api/authApi";
 import { clearLiked, clearDisliked, clearSaved, clearFavorites, clearAll } from "../api/picksApi";
-import { colors } from "../theme";
+import { useTheme } from "../theme";
 import { LanguageContext } from "../context/LanguageContext";
 
 export function SettingsScreen() {
   const { signOut } = useContext(AuthContext);
   const { language, setLanguage, t } = useContext(LanguageContext);
+  const { colors, themeMode, toggleTheme } = useTheme();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,6 +53,280 @@ export function SettingsScreen() {
   const [langModalVisible, setLangModalVisible] = useState(false);
 
   const eyeRef = useRef(null);
+
+  const styles = useMemo(() => StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.bg.primary,
+    },
+    header: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: 20,
+      paddingTop: 60,
+      paddingBottom: 12,
+      backgroundColor: colors.bg.primary,
+      zIndex: 10,
+    },
+    headerTitle: {
+      color: colors.text.primary,
+      fontSize: 22,
+      fontWeight: "800",
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingTop: 100,
+    },
+    scrollArea: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: 20,
+      paddingTop: 100,
+      paddingBottom: 40,
+    },
+    section: {
+      backgroundColor: colors.bg.card,
+      borderRadius: 12,
+      marginBottom: 24,
+      paddingBottom: 4,
+    },
+    sectionLabel: {
+      color: colors.text.tertiary,
+      fontSize: 12,
+      fontWeight: "600",
+      letterSpacing: 1,
+      marginBottom: 8,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+    rowInfo: {
+      marginLeft: 12,
+      flex: 1,
+    },
+    rowValue: {
+      color: colors.text.primary,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    rowLabel: {
+      color: colors.text.tertiary,
+      fontSize: 16,
+      marginTop: 1,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginHorizontal: 16,
+    },
+
+    chip: {
+      alignSelf: "stretch",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 17,
+      paddingHorizontal: 16,
+    },
+    chipDivider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginHorizontal: 16,
+    },
+    chipIcon: {
+      width: 24,
+      alignItems: "center",
+    },
+    chipLabel: {
+      color: colors.text.primary,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    modalInputWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.bg.elevated,
+      borderRadius: 10,
+      width: "100%",
+      marginBottom: 12,
+    },
+    modalInput: {
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      color: colors.text.primary,
+      fontSize: 16,
+    },
+    modalEyeButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 14,
+    },
+
+    modalOverlay: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.bg.overlay,
+    },
+    modalContent: {
+      width: "85%",
+      backgroundColor: colors.bg.modal,
+      borderRadius: 16,
+      padding: 24,
+      alignItems: "center",
+    },
+    closeButton: {
+      position: "absolute",
+      top: 12,
+      right: 16,
+      zIndex: 1,
+      padding: 4,
+    },
+    closeButtonText: {
+      color: colors.text.muted,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    modalTitle: {
+      color: colors.text.primary,
+      fontSize: 16,
+      fontWeight: "700",
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    modalSubtitle: {
+      color: colors.text.tertiary,
+      fontSize: 16,
+      textAlign: "center",
+      marginBottom: 20,
+      lineHeight: 20,
+    },
+    passwordInput: {
+      width: "100%",
+      backgroundColor: colors.bg.elevated,
+      borderRadius: 10,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      color: colors.text.primary,
+      fontSize: 16,
+      marginBottom: 12,
+    },
+    codeInput: {
+      width: "100%",
+      backgroundColor: colors.bg.elevated,
+      borderRadius: 10,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      color: colors.text.primary,
+      fontSize: 16,
+      fontWeight: "700",
+      textAlign: "center",
+      letterSpacing: 8,
+      marginBottom: 12,
+    },
+    errorText: {
+      color: colors.accent,
+      fontSize: 16,
+      textAlign: "center",
+      marginBottom: 12,
+    },
+    modalButtons: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    cancelButton: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 10,
+      backgroundColor: colors.bg.elevated,
+      alignItems: "center",
+    },
+    cancelButtonText: {
+      color: colors.text.secondary,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    deleteButton: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 10,
+      backgroundColor: colors.accent,
+      alignItems: "center",
+    },
+    deleteButtonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    verifyButton: {
+      width: "100%",
+      paddingVertical: 14,
+      borderRadius: 10,
+      backgroundColor: colors.accent,
+      alignItems: "center",
+    },
+    verifyButtonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    buttonDisabled: {
+      opacity: 0.5,
+    },
+    successIcon: {
+      color: colors.success,
+      fontSize: 16,
+      fontWeight: "700",
+      marginBottom: 12,
+    },
+    successText: {
+      color: colors.success,
+      fontSize: 16,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+    footer: {
+      marginTop: 24,
+      paddingHorizontal: 20,
+    },
+    footerText: {
+      color: colors.text.muted,
+      fontSize: 11,
+      textAlign: "center",
+      lineHeight: 16,
+    },
+    langOption: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      width: "100%",
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderRadius: 10,
+      marginBottom: 8,
+    },
+    langOptionActive: {
+      backgroundColor: colors.bg.elevated,
+    },
+    langOptionText: {
+      color: colors.text.primary,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    langOptionTextActive: {
+      color: colors.accent,
+    },
+  }), [colors]);
 
   useEffect(() => {
     me()
@@ -218,7 +494,7 @@ export function SettingsScreen() {
         </View>
       ) : (
         <ScrollView style={styles.scrollArea} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.section, { backgroundColor: "#1a1a1a" }]}>
+          <View style={[styles.section, { backgroundColor: colors.bg.section }]}>
             <Text style={styles.sectionLabel}>{t("settings.account")}</Text>
             <View style={styles.row}>
                 <Feather name="user" size={22} color={colors.text.primary} />
@@ -244,7 +520,7 @@ export function SettingsScreen() {
             </Pressable>
           </View>
 
-          <View style={[styles.section, { backgroundColor: "#1a1a1a" }]}>
+          <View style={[styles.section, { backgroundColor: colors.bg.section }]}>
             <Text style={styles.sectionLabel}>{t("settings.manageLibrary")}</Text>
             <Pressable style={styles.chip} onPress={handleClearLiked}>
               <View style={styles.chipIcon}>
@@ -276,13 +552,13 @@ export function SettingsScreen() {
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleResetLibrary}>
               <View style={styles.chipIcon}>
-                <Feather name="refresh-cw" size={22} color={colors.accent} />
+                <Feather name="trash" size={22} color={colors.accent} />
               </View>
               <Text style={[styles.chipLabel, { color: colors.accent }]}>{t("settings.resetLibrary")}</Text>
             </Pressable>
           </View>
 
-          <View style={[styles.section, { backgroundColor: "#1a1a1a" }]}>
+          <View style={[styles.section, { backgroundColor: colors.bg.section }]}>
             <Text style={styles.sectionLabel}>{t("settings.languageSection")}</Text>
             <Pressable style={styles.chip} onPress={() => setLangModalVisible(true)}>
               <View style={styles.chipIcon}>
@@ -293,7 +569,23 @@ export function SettingsScreen() {
             </Pressable>
           </View>
 
-          <View style={[styles.section, { backgroundColor: "#1a1a1a" }]}>
+          <View style={[styles.section, { backgroundColor: colors.bg.section }]}>
+            <Text style={styles.sectionLabel}>{t("settings.appearance")}</Text>
+            <View style={styles.row}>
+              <Feather name={themeMode === "dark" ? "moon" : "sun"} size={22} color={colors.text.primary} />
+              <View style={styles.rowInfo}>
+                <Text style={styles.rowValue}>{t("settings.darkMode")}</Text>
+              </View>
+              <Switch
+                value={themeMode === "dark"}
+                onValueChange={toggleTheme}
+                trackColor={{ false: colors.bg.elevated, true: colors.accent }}
+                thumbColor={colors.text.primary}
+              />
+            </View>
+          </View>
+
+          <View style={[styles.section, { backgroundColor: colors.bg.section }]}>
             <Text style={styles.sectionLabel}>{t("settings.manageAccount")}</Text>
             <Pressable style={styles.chip} onPress={handleOpenPwModal}>
               <View style={styles.chipIcon}>
@@ -602,276 +894,4 @@ export function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg.primary,
-  },
-  header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 12,
-    backgroundColor: colors.bg.primary,
-    zIndex: 10,
-  },
-  headerTitle: {
-    color: colors.text.primary,
-    fontSize: 22,
-    fontWeight: "800",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 100,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 100,
-    paddingBottom: 40,
-  },
-  section: {
-    backgroundColor: colors.bg.card,
-    borderRadius: 12,
-    marginBottom: 24,
-    paddingBottom: 4,
-  },
-  sectionLabel: {
-    color: colors.text.tertiary,
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 1,
-    marginBottom: 8,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  rowInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  rowValue: {
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  rowLabel: {
-    color: colors.text.tertiary,
-    fontSize: 16,
-    marginTop: 1,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#444",
-    marginHorizontal: 16,
-  },
 
-  chip: {
-    alignSelf: "stretch",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 17,
-    paddingHorizontal: 16,
-  },
-  chipDivider: {
-    height: 1,
-    backgroundColor: "#444",
-    marginHorizontal: 16,
-  },
-  chipIcon: {
-    width: 24,
-    alignItems: "center",
-  },
-  chipLabel: {
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  modalInputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 10,
-    width: "100%",
-    marginBottom: 12,
-  },
-  modalInput: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: colors.text.primary,
-    fontSize: 16,
-  },
-  modalEyeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-  },
-
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.bg.overlay,
-  },
-  modalContent: {
-    width: "85%",
-    backgroundColor: "#1a1a2e",
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 12,
-    right: 16,
-    zIndex: 1,
-    padding: 4,
-  },
-  closeButtonText: {
-    color: colors.text.muted,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  modalTitle: {
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    color: colors.text.tertiary,
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  passwordInput: {
-    width: "100%",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: colors.text.primary,
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  codeInput: {
-    width: "100%",
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-    letterSpacing: 8,
-    marginBottom: 12,
-  },
-  errorText: {
-    color: colors.accent,
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: colors.text.secondary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  deleteButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 10,
-    backgroundColor: colors.accent,
-    alignItems: "center",
-  },
-  deleteButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  verifyButton: {
-    width: "100%",
-    paddingVertical: 14,
-    borderRadius: 10,
-    backgroundColor: colors.accent,
-    alignItems: "center",
-  },
-  verifyButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  successIcon: {
-    color: colors.success,
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  successText: {
-    color: colors.success,
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  footer: {
-    marginTop: 24,
-    paddingHorizontal: 20,
-  },
-  footerText: {
-    color: colors.text.muted,
-    fontSize: 11,
-    textAlign: "center",
-    lineHeight: 16,
-  },
-  langOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-  langOptionActive: {
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  langOptionText: {
-    color: colors.text.primary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  langOptionTextActive: {
-    color: colors.accent,
-  },
-});

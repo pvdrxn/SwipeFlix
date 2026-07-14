@@ -8,7 +8,8 @@
     "refreshing": "Refreshing...",
     "loading": "Loading...",
     "error": "Error: ",
-    "retry": "Retry"
+    "retry": "Retry",
+    "becauseYouLiked": "Because you liked {title}"
   },
   "categories": {
     "popular": "Popular",
@@ -58,7 +59,9 @@
     "manageAccount": "MANAGE ACCOUNT",
     "changePassword": "Change password",
     "changeEmail": "Change email",
-    "deleteAccount": "Delete account"
+    "deleteAccount": "Delete account",
+    "appearance": "APPEARANCE",
+    "darkMode": "Dark Mode"
   },
   "modal": {
     "cancel": "Cancel",
