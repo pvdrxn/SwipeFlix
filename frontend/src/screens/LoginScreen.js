@@ -9,6 +9,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  ImageBackground,
 } from "react-native";
 import { AuthContext } from "../auth/AuthContext";
 import { verifyEmail, resendCode } from "../api/authApi";
@@ -33,9 +34,13 @@ export function LoginScreen({ navigation }) {
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
-      padding: 20,
       justifyContent: "center",
-      backgroundColor: colors.bg.primary,
+    },
+    overlay: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 20,
+      backgroundColor: "rgba(0,0,0,0.35)",
     },
     title: {
       color: colors.text.primary,
@@ -49,8 +54,8 @@ export function LoginScreen({ navigation }) {
       marginBottom: 24,
     },
     card: {
-      backgroundColor: colors.bg.card,
-      borderColor: colors.bg.card,
+      backgroundColor: "#000000",
+      borderColor: "rgba(255,255,255,0.1)",
       borderWidth: 1,
       borderRadius: 16,
       padding: 16,
@@ -262,7 +267,8 @@ export function LoginScreen({ navigation }) {
   const canSubmit = username.trim().length > 0 && password.length > 0 && !submitting;
 
   return (
-    <View style={styles.container}>
+      <ImageBackground source={require("../../assets/loginbg.jpg")} style={styles.container} resizeMode="cover" blurRadius={4}>
+      <View style={styles.overlay}>
       <Text style={styles.title}>Welcome back</Text>
       <Text style={styles.subtitle}>Sign in to pick your next movie.</Text>
 
@@ -273,7 +279,7 @@ export function LoginScreen({ navigation }) {
           onChangeText={setUsername}
           autoCapitalize="none"
           autoCorrect={false}
-          placeholder="juan"
+          placeholder="Username"
           style={styles.input}
         />
 
@@ -386,6 +392,7 @@ export function LoginScreen({ navigation }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+      </View>
+    </ImageBackground>
   );
 }

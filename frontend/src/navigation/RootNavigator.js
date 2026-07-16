@@ -16,6 +16,7 @@ import { useTheme } from "../theme";
 import { Feather } from "@expo/vector-icons";
 import { ActivityIndicator, View, Animated, Pressable, Dimensions } from "react-native";
 import { withFadeTransition } from "../components/AnimatedScreen";
+import { AnimatedSplash } from "../components/AnimatedSplash";
 
 const AuthStack = createNativeStackNavigator();
 const AppNav = createStackNavigator();
@@ -243,8 +244,10 @@ export function RootNavigator() {
   const { isBootstrapping, isSignedIn } = useContext(AuthContext);
   const { t } = useContext(LanguageContext);
   const { colors } = useTheme();
+  const [splashDone, setSplashDone] = useState(false);
 
   if (isBootstrapping) return <Splash />;
+  if (!splashDone) return <AnimatedSplash onFinish={() => setSplashDone(true)} />;
 
   return (
     <NavigationContainer>
@@ -255,7 +258,7 @@ export function RootNavigator() {
           initialRouteName="Login"
           screenOptions={{ headerStyle: { backgroundColor: colors.bg.primary }, headerTintColor: colors.text.primary }}
         >
-          <AuthStack.Screen name="Login" component={LoginScreen} options={{ title: t("auth.logIn") }} />
+          <AuthStack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <AuthStack.Screen name="Register" component={RegisterScreen} options={{ title: t("auth.register") }} />
         </AuthStack.Navigator>
       )}
