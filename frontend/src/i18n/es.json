@@ -80,7 +80,10 @@
     "emailChangedSuccess": "Correo electrónico cambiado exitosamente",
     "weSentCode": "Enviamos un código de 6 dígitos a",
     "confirmPasswordChange": "Confirmar cambio de contraseña",
-    "confirmEmailChange": "Confirmar cambio de correo electrónico"
+    "confirmEmailChange": "Confirmar cambio de correo electrónico",
+    "signOutTitle": "Cerrar sesión",
+    "signOutSubtitle": "¿Estás seguro de que quieres cerrar sesión?",
+    "signOut": "Cerrar sesión"
   },
   "alert": {
     "clearTitle": "Limpiar {label}",
@@ -110,7 +113,26 @@
   },
   "auth": {
     "logIn": "Iniciar sesión",
-    "register": "Registrarse"
+    "register": "Registrarse",
+    "welcomeBack": "Bienvenido de nuevo",
+    "signInSubtitle": "Inicia sesión para elegir tu próxima película.",
+    "createAccountTitle": "Crear cuenta",
+    "registerSubtitle": "Guarda tus elecciones y mantén tu lista sincronizada.",
+    "usernamePlaceholder": "Usuario",
+    "passwordPlaceholder": "Contraseña",
+    "emailPlaceholder": "Correo electrónico",
+    "newHere": "¿Nuevo?",
+    "createAccount": "Crear una cuenta",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "logInLink": "Inicia sesión",
+    "verifyEmailNotice": "Para iniciar sesión primero debes verificar tu correo electrónico.",
+    "verifyEmailLink": "Verificar correo",
+    "verifyEmailTitle": "Verifica tu correo",
+    "weSentCode": "Enviamos un código de 6 dígitos a",
+    "enterCodePlaceholder": "Ingresa el código",
+    "verify": "Verificar",
+    "resendCode": "Reenviar código",
+    "accountVerified": "Cuenta verificada exitosamente"
   },
   "details": {
     "loading": "Cargando...",

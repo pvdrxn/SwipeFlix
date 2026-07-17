@@ -80,7 +80,10 @@
     "emailChangedSuccess": "Почта успешно изменена",
     "weSentCode": "Мы отправили 6-значный код на",
     "confirmPasswordChange": "Подтвердите смену пароля",
-    "confirmEmailChange": "Подтвердите смену почты"
+    "confirmEmailChange": "Подтвердите смену почты",
+    "signOutTitle": "Выйти",
+    "signOutSubtitle": "Вы уверены, что хотите выйти?",
+    "signOut": "Выйти"
   },
   "alert": {
     "clearTitle": "Очистить {label}",
@@ -110,7 +113,26 @@
   },
   "auth": {
     "logIn": "Войти",
-    "register": "Регистрация"
+    "register": "Регистрация",
+    "welcomeBack": "С возвращением",
+    "signInSubtitle": "Войдите, чтобы выбрать следующий фильм.",
+    "createAccountTitle": "Создать аккаунт",
+    "registerSubtitle": "Сохраняйте выбор и синхронизируйте список.",
+    "usernamePlaceholder": "Имя пользователя",
+    "passwordPlaceholder": "Пароль",
+    "emailPlaceholder": "Электронная почта",
+    "newHere": "Впервые?",
+    "createAccount": "Создать аккаунт",
+    "alreadyHaveAccount": "Уже есть аккаунт?",
+    "logInLink": "Войти",
+    "verifyEmailNotice": "Чтобы войти, сначала подтвердите адрес электронной почты.",
+    "verifyEmailLink": "Подтвердить email",
+    "verifyEmailTitle": "Подтвердите email",
+    "weSentCode": "Мы отправили 6-значный код на",
+    "enterCodePlaceholder": "Введите код",
+    "verify": "Подтвердить",
+    "resendCode": "Отправить код повторно",
+    "accountVerified": "Аккаунт успешно подтверждён"
   },
   "details": {
     "loading": "Загрузка...",

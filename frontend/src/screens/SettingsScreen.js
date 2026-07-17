@@ -219,7 +219,13 @@ export function SettingsScreen() {
       paddingVertical: 14,
       color: colors.text.primary,
       fontSize: 16,
-      marginBottom: 12,
+      marginBottom: 20,
+    },
+    errorText: {
+      color: colors.accent,
+      fontSize: 16,
+      textAlign: "center",
+      marginBottom: 20,
     },
     codeInput: {
       width: "100%",
@@ -232,12 +238,6 @@ export function SettingsScreen() {
       fontWeight: "700",
       textAlign: "center",
       letterSpacing: 8,
-      marginBottom: 12,
-    },
-    errorText: {
-      color: colors.accent,
-      fontSize: 16,
-      textAlign: "center",
       marginBottom: 12,
     },
     modalButtons: {
@@ -512,7 +512,7 @@ export function SettingsScreen() {
               </View>
             </View>
             <View style={styles.divider} />
-            <Pressable style={styles.chip} onPress={signOut}>
+            <Pressable style={styles.chip} onPress={() => Alert.alert(t("modal.signOutTitle"), t("modal.signOutSubtitle"), [{ text: t("modal.cancel"), style: "cancel" }, { text: t("modal.signOut"), style: "destructive", onPress: signOut }])}>
               <View style={styles.chipIcon}>
                 <Feather name="log-out" size={24} color={colors.text.primary} />
               </View>
@@ -620,6 +620,7 @@ export function SettingsScreen() {
       <Modal
         visible={deleteModalVisible}
         transparent
+        statusBarTranslucent={true}
         animationType="fade"
         onRequestClose={() => setDeleteModalVisible(false)}
       >
@@ -655,7 +656,7 @@ export function SettingsScreen() {
                 <Text style={styles.cancelButtonText}>{t("modal.cancel")}</Text>
               </Pressable>
               <Pressable
-                style={[styles.deleteButton, deleting && styles.buttonDisabled]}
+                style={[styles.deleteButton, (deleting || !deletePassword) && styles.buttonDisabled]}
                 onPress={handleDelete}
                 disabled={deleting || !deletePassword}
               >
@@ -673,6 +674,7 @@ export function SettingsScreen() {
       <Modal
         visible={pwModalVisible}
         transparent
+        statusBarTranslucent={true}
         animationType="fade"
         onRequestClose={() => setPwModalVisible(false)}
       >
@@ -770,6 +772,7 @@ export function SettingsScreen() {
       <Modal
         visible={emailModalVisible}
         transparent
+        statusBarTranslucent={true}
         animationType="fade"
         onRequestClose={() => setEmailModalVisible(false)}
       >
@@ -856,6 +859,7 @@ export function SettingsScreen() {
       <Modal
         visible={langModalVisible}
         transparent
+        statusBarTranslucent={true}
         animationType="fade"
         onRequestClose={() => setLangModalVisible(false)}
       >

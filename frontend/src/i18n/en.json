@@ -80,7 +80,10 @@
     "emailChangedSuccess": "Email changed successfully",
     "weSentCode": "We sent a 6-digit code to",
     "confirmPasswordChange": "Confirm password change",
-    "confirmEmailChange": "Confirm email change"
+    "confirmEmailChange": "Confirm email change",
+    "signOutTitle": "Sign out",
+    "signOutSubtitle": "Are you sure you want to sign out?",
+    "signOut": "Sign out"
   },
   "alert": {
     "clearTitle": "Clear {label}",
@@ -110,7 +113,26 @@
   },
   "auth": {
     "logIn": "Log in",
-    "register": "Register"
+    "register": "Register",
+    "welcomeBack": "Welcome back",
+    "signInSubtitle": "Sign in to pick your next movie.",
+    "createAccountTitle": "Create account",
+    "registerSubtitle": "Save your picks and keep your list synced.",
+    "usernamePlaceholder": "Username",
+    "passwordPlaceholder": "Password",
+    "emailPlaceholder": "Email",
+    "newHere": "New here?",
+    "createAccount": "Create an account",
+    "alreadyHaveAccount": "Already have an account?",
+    "logInLink": "Log in",
+    "verifyEmailNotice": "To sign in you need to verify your email first.",
+    "verifyEmailLink": "Verify email",
+    "verifyEmailTitle": "Verify your email",
+    "weSentCode": "We sent a 6-digit code to",
+    "enterCodePlaceholder": "Enter code",
+    "verify": "Verify",
+    "resendCode": "Resend code",
+    "accountVerified": "Account verified successfully"
   },
   "details": {
     "loading": "Loading...",

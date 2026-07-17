@@ -14,12 +14,15 @@ import {
   Platform,
   Image,
 } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { AuthContext } from "../auth/AuthContext";
 import { verifyEmail, resendCode } from "../api/authApi";
+import { LanguageContext } from "../context/LanguageContext";
 import { useTheme } from "../theme";
 
 export function AuthScreen() {
   const { signIn, signUp, setAuthTokens } = useContext(AuthContext);
+  const { language, setLanguage, t } = useContext(LanguageContext);
   const { colors } = useTheme();
 
   const [mode, setMode] = useState("login");
@@ -36,6 +39,7 @@ export function AuthScreen() {
   const [verifyError, setVerifyError] = useState("");
   const [resending, setResending] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [langModalVisible, setLangModalVisible] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const transitioning = useRef(false);
@@ -167,17 +171,6 @@ export function AuthScreen() {
       padding: 20,
       backgroundColor: "rgba(0,0,0,0.35)",
     },
-    logoContainer: {
-      position: "absolute",
-      top: -5,
-      left: 0,
-      right: 0,
-      alignItems: "center",
-    },
-    logo: {
-      width: 800,
-      height: 240,
-    },
     title: {
       color: "#fff",
       fontSize: 32,
@@ -261,7 +254,7 @@ export function AuthScreen() {
     },
     modalContent: {
       width: "85%",
-      backgroundColor: colors.bg.modal,
+      backgroundColor: "#1a1a2e",
       borderRadius: 16,
       padding: 24,
       alignItems: "center",
@@ -344,6 +337,52 @@ export function AuthScreen() {
       fontWeight: "700",
       textAlign: "center",
     },
+    langButton: {
+      position: "absolute",
+      top: 50,
+      right: 16,
+      zIndex: 20,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    langButtonText: {
+      color: "#fff",
+      fontSize: 14,
+      fontWeight: "600",
+      textTransform: "uppercase",
+    },
+    langModalOverlay: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0,0,0,0.6)",
+    },
+    langModalContent: {
+      width: "75%",
+      backgroundColor: "#1a1a2e",
+      borderRadius: 16,
+      padding: 20,
+      gap: 8,
+    },
+    langOption: {
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderRadius: 10,
+    },
+    langOptionActive: {
+      backgroundColor: colors.accent,
+    },
+    langOptionText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "600",
+      textAlign: "center",
+    },
   }), [colors]);
 
   return (
@@ -361,23 +400,25 @@ export function AuthScreen() {
         blurRadius={3}
       />
       <View style={styles.overlay}>
-        <View style={styles.logoContainer}>
-          <Image source={require("../../assets/logo_impact_condensed.png")} style={styles.logo} resizeMode="contain" />
-        </View>
+        <Pressable style={styles.langButton} onPress={() => setLangModalVisible(true)}>
+          <Feather name="globe" size={16} color="#fff" />
+          <Text style={styles.langButtonText}>{language}</Text>
+        </Pressable>
+
 
         <Animated.View
           style={{ opacity: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }}
           pointerEvents={isLogin ? "auto" : "none"}
         >
-          <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Sign in to pick your next movie.</Text>
+          <Text style={styles.title}>{t("auth.welcomeBack")}</Text>
+          <Text style={styles.subtitle}>{t("auth.signInSubtitle")}</Text>
           <View style={styles.card}>
             <TextInput
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="Username"
+              placeholder={t("auth.usernamePlaceholder")}
               placeholderTextColor="#ddd"
               style={styles.input}
             />
@@ -385,7 +426,7 @@ export function AuthScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              placeholder="Password"
+              placeholder={t("auth.passwordPlaceholder")}
               placeholderTextColor="#ddd"
               style={styles.input}
             />
@@ -393,9 +434,9 @@ export function AuthScreen() {
             {unverifiedEmail && isLogin ? (
               <View style={styles.unverifiedContainer}>
                 <Text style={styles.unverifiedText}>
-                  To sign in you need to verify your email first.{" "}
+                  {t("auth.verifyEmailNotice")}{" "}
                   <Text style={styles.verifyLink} onPress={() => setModalVisible(true)}>
-                    Verify email
+                    {t("auth.verifyEmailLink")}
                   </Text>
                 </Text>
               </View>
@@ -409,10 +450,10 @@ export function AuthScreen() {
                 pressed && canSubmitLogin && styles.buttonPressed,
               ]}
             >
-              {submitting && isLogin ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Log in</Text>}
+              {submitting && isLogin ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t("auth.logIn")}</Text>}
             </Pressable>
             <Pressable onPress={toggleMode} style={styles.linkButton}>
-              <Text style={styles.linkText}>New here? <Text style={{ color: "#fff", fontSize: 14, textDecorationLine: "underline" }}>Create an account</Text></Text>
+              <Text style={styles.linkText}>{t("auth.newHere")} <Text style={{ color: "#fff", fontSize: 14, textDecorationLine: "underline" }}>{t("auth.createAccount")}</Text></Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -421,15 +462,15 @@ export function AuthScreen() {
           style={[StyleSheet.absoluteFill, { opacity: fadeAnim, padding: 20, justifyContent: "center" }]}
           pointerEvents={isLogin ? "none" : "auto"}
         >
-          <Text style={styles.title}>Create account</Text>
-          <Text style={styles.subtitle}>Save your picks and keep your list synced.</Text>
+          <Text style={styles.title}>{t("auth.createAccountTitle")}</Text>
+          <Text style={styles.subtitle}>{t("auth.registerSubtitle")}</Text>
           <View style={styles.card}>
             <TextInput
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="Username"
+              placeholder={t("auth.usernamePlaceholder")}
               placeholderTextColor="#ddd"
               style={styles.input}
             />
@@ -439,7 +480,7 @@ export function AuthScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
-              placeholder="Email"
+              placeholder={t("auth.emailPlaceholder")}
               placeholderTextColor="#ddd"
               style={styles.input}
             />
@@ -447,7 +488,7 @@ export function AuthScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              placeholder="Password"
+              placeholder={t("auth.passwordPlaceholder")}
               placeholderTextColor="#ddd"
               style={styles.input}
             />
@@ -461,10 +502,10 @@ export function AuthScreen() {
                 pressed && canSubmitRegister && styles.buttonPressed,
               ]}
             >
-              {submitting && !isLogin ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Register</Text>}
+              {submitting && !isLogin ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t("auth.register")}</Text>}
             </Pressable>
             <Pressable onPress={toggleMode} style={styles.linkButton}>
-              <Text style={styles.linkText}>Already have an account? <Text style={{ color: "#fff", fontSize: 14, textDecorationLine: "underline" }}>Log in</Text></Text>
+              <Text style={styles.linkText}>{t("auth.alreadyHaveAccount")} <Text style={{ color: "#fff", fontSize: 14, textDecorationLine: "underline" }}>{t("auth.logInLink")}</Text></Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -473,6 +514,7 @@ export function AuthScreen() {
       <Modal
         visible={modalVisible}
         transparent
+        statusBarTranslucent={true}
         animationType="fade"
         onRequestClose={handleCloseModal}
       >
@@ -487,17 +529,17 @@ export function AuthScreen() {
             {verified ? (
               <>
                 <Text style={styles.successIcon}>✓</Text>
-                <Text style={styles.successText}>Account verified successfully</Text>
+                <Text style={styles.successText}>{t("auth.accountVerified")}</Text>
               </>
             ) : (
               <>
-                <Text style={styles.modalTitle}>Verify your email</Text>
+                <Text style={styles.modalTitle}>{t("auth.verifyEmailTitle")}</Text>
                 <Text style={styles.modalSubtitle}>
-                  We sent a 6-digit code to{"\n"}{isLogin ? unverifiedEmail : email}
+                  {t("auth.weSentCode")}{"\n"}{isLogin ? unverifiedEmail : email}
                 </Text>
                 <TextInput
                   style={styles.codeInput}
-                  placeholder="Enter code"
+                  placeholder={t("auth.enterCodePlaceholder")}
                   placeholderTextColor={"#fff"}
                   value={code}
                   onChangeText={(text) => {
@@ -516,7 +558,7 @@ export function AuthScreen() {
                   {verifying ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.verifyButtonText}>Verify</Text>
+                    <Text style={styles.verifyButtonText}>{t("auth.verify")}</Text>
                   )}
                 </Pressable>
                 <Pressable
@@ -527,13 +569,40 @@ export function AuthScreen() {
                   {resending ? (
                     <ActivityIndicator color={"#fff"} size="small" />
                   ) : (
-                    <Text style={styles.resendText}>Resend code</Text>
+                    <Text style={styles.resendText}>{t("auth.resendCode")}</Text>
                   )}
                 </Pressable>
               </>
             )}
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={langModalVisible}
+        transparent
+        statusBarTranslucent={true}
+        animationType="fade"
+        onRequestClose={() => setLangModalVisible(false)}
+      >
+        <Pressable style={styles.langModalOverlay} onPress={() => setLangModalVisible(false)}>
+          <Pressable style={styles.langModalContent} onPress={() => {}}>
+            {["en", "es", "ru"].map((lang) => (
+              <Pressable
+                key={lang}
+                style={[styles.langOption, language === lang && styles.langOptionActive]}
+                onPress={() => {
+                  setLanguage(lang);
+                  setLangModalVisible(false);
+                }}
+              >
+                <Text style={styles.langOptionText}>
+                  {lang === "en" ? "English" : lang === "es" ? "Español" : "Русский"}
+                </Text>
+              </Pressable>
+            ))}
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );

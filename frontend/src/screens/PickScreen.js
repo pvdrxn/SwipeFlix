@@ -863,6 +863,7 @@ export function PickScreen() {
       <Modal
         visible={infoModalVisible}
         transparent
+        statusBarTranslucent={true}
         animationType="fade"
         onRequestClose={() => setInfoModalVisible(false)}
       >
