@@ -1,12 +1,9 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { AuthContext } from "../auth/AuthContext";
-import { LanguageContext } from "../context/LanguageContext";
-import { LoginScreen } from "../screens/LoginScreen";
-import { RegisterScreen } from "../screens/RegisterScreen";
+import { AuthScreen } from "../screens/AuthScreen";
 import { HomeScreen } from "../screens/HomeScreen";
 import { PickScreen } from "../screens/PickScreen";
 import { LibraryScreen } from "../screens/LibraryScreen";
@@ -18,7 +15,6 @@ import { ActivityIndicator, View, Animated, Pressable, Dimensions } from "react-
 import { withFadeTransition } from "../components/AnimatedScreen";
 import { AnimatedSplash } from "../components/AnimatedSplash";
 
-const AuthStack = createNativeStackNavigator();
 const AppNav = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -29,6 +25,10 @@ function Splash() {
       <ActivityIndicator />
     </View>
   );
+}
+
+function AuthScreens() {
+  return <AuthScreen />;
 }
 
 const AnimatedHomeScreen = withFadeTransition(HomeScreen);
@@ -242,25 +242,27 @@ function AppStack() {
 
 export function RootNavigator() {
   const { isBootstrapping, isSignedIn } = useContext(AuthContext);
-  const { t } = useContext(LanguageContext);
   const { colors } = useTheme();
   const [splashDone, setSplashDone] = useState(false);
 
   if (isBootstrapping) return <Splash />;
   if (!splashDone) return <AnimatedSplash onFinish={() => setSplashDone(true)} />;
 
+  const navTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      background: "#000",
+      card: "#000",
+    },
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navTheme}>
       {isSignedIn ? (
         <AppStack />
       ) : (
-        <AuthStack.Navigator
-          initialRouteName="Login"
-          screenOptions={{ headerStyle: { backgroundColor: colors.bg.primary }, headerTintColor: colors.text.primary }}
-        >
-          <AuthStack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          <AuthStack.Screen name="Register" component={RegisterScreen} options={{ title: t("auth.register") }} />
-        </AuthStack.Navigator>
+        <AuthScreens />
       )}
     </NavigationContainer>
   );

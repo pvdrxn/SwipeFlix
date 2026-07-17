@@ -4,7 +4,6 @@ import {
   Animated,
   Dimensions,
   Easing,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -13,19 +12,23 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { AuthContext } from "../auth/AuthContext";
-import { verifyEmail as verifyEmailApi, resendCode } from "../api/authApi";
+import { verifyEmail, resendCode } from "../api/authApi";
 import { useTheme } from "../theme";
 
-export function RegisterScreen({ navigation }) {
-  const { signUp, setAuthTokens } = useContext(AuthContext);
+export function AuthScreen() {
+  const { signIn, signUp, setAuthTokens } = useContext(AuthContext);
   const { colors } = useTheme();
+
+  const [mode, setMode] = useState("login");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [code, setCode] = useState("");
@@ -34,7 +37,58 @@ export function RegisterScreen({ navigation }) {
   const [resending, setResending] = useState(false);
   const [verified, setVerified] = useState(false);
 
-  async function onSubmit() {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const transitioning = useRef(false);
+
+  function toggleMode() {
+    if (transitioning.current) return;
+    transitioning.current = true;
+    const toValue = mode === "login" ? 1 : 0;
+    Animated.timing(fadeAnim, {
+      toValue,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setMode(mode === "login" ? "register" : "login");
+      setError(null);
+      transitioning.current = false;
+    });
+  }
+
+  const screenHeight = Dimensions.get("window").height;
+  const scrollAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.timing(scrollAnim, {
+        toValue: -screenHeight,
+        duration: 40000,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      })
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [scrollAnim, screenHeight]);
+
+  async function handleLogin() {
+    setError(null);
+    setUnverifiedEmail(null);
+    setSubmitting(true);
+    try {
+      await signIn({ username: username.trim(), password });
+    } catch (e) {
+      if (e.response?.data?.detail === "Email not verified.") {
+        setUnverifiedEmail(e.response.data.email);
+      } else {
+        setError("Invalid username or password.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleRegister() {
     setError(null);
     setSubmitting(true);
     try {
@@ -57,10 +111,17 @@ export function RegisterScreen({ navigation }) {
     setVerifyError("");
     setVerifying(true);
     try {
-      const tokens = await verifyEmailApi({ email: email.trim(), code: code.trim() });
+      const emailToUse = mode === "login" ? unverifiedEmail : email;
+      const result = await verifyEmail({ email: emailToUse, code: code.trim() });
       setVerified(true);
       await new Promise((r) => setTimeout(r, 1500));
-      await setAuthTokens({ accessToken: tokens.access, refreshToken: tokens.refresh });
+      if (mode === "login") {
+        setModalVisible(false);
+        setVerified(false);
+        await signIn({ username: username.trim(), password });
+      } else {
+        await setAuthTokens({ accessToken: result.access, refreshToken: result.refresh });
+      }
     } catch (e) {
       if (e.response?.status === 400) {
         setVerifyError(e.response.data.detail || "Invalid or expired code.");
@@ -75,7 +136,8 @@ export function RegisterScreen({ navigation }) {
   async function handleResend() {
     setResending(true);
     try {
-      await resendCode({ email: email.trim() });
+      const emailToUse = mode === "login" ? unverifiedEmail : email;
+      await resendCode({ email: emailToUse });
     } catch (e) {
       setVerifyError("Could not resend code. Try again.");
     } finally {
@@ -89,27 +151,10 @@ export function RegisterScreen({ navigation }) {
     setVerifyError("");
   }
 
-  const canSubmit =
-    username.trim().length >= 3 &&
-    email.trim().length > 0 &&
-    password.length >= 8 &&
-    !submitting;
+  const canSubmitLogin = username.trim().length > 0 && password.length > 0 && !submitting;
+  const canSubmitRegister = username.trim().length >= 3 && email.trim().length > 0 && password.length >= 8 && !submitting;
 
-  const screenHeight = Dimensions.get("window").height;
-  const scrollAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.timing(scrollAnim, {
-        toValue: -screenHeight,
-        duration: 40000,
-        useNativeDriver: true,
-        easing: Easing.linear,
-      })
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [scrollAnim, screenHeight]);
+  const isLogin = mode === "login";
 
   const styles = useMemo(() => StyleSheet.create({
     container: {
@@ -165,6 +210,22 @@ export function RegisterScreen({ navigation }) {
     error: {
       color: colors.accentSecondary,
       marginTop: 10,
+    },
+    unverifiedContainer: {
+      backgroundColor: colors.bg.card,
+      borderRadius: 10,
+      padding: 12,
+      marginTop: 10,
+    },
+    unverifiedText: {
+      color: colors.text.secondary,
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    verifyLink: {
+      color: colors.accent,
+      fontWeight: "700",
+      textDecorationLine: "underline",
     },
     button: {
       marginTop: 50,
@@ -299,61 +360,114 @@ export function RegisterScreen({ navigation }) {
         resizeMode="cover"
         blurRadius={3}
       />
-    <View style={styles.overlay}>
-      <View style={styles.logoContainer}>
-        <Image source={require("../../assets/logo_impact_condensed.png")} style={styles.logo} resizeMode="contain" />
-      </View>
-      <Text style={styles.title}>Create account</Text>
-      <Text style={styles.subtitle}>Save your picks and keep your list synced.</Text>
+      <View style={styles.overlay}>
+        <View style={styles.logoContainer}>
+          <Image source={require("../../assets/logo_impact_condensed.png")} style={styles.logo} resizeMode="contain" />
+        </View>
 
-      <View style={styles.card}>
-        <TextInput
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
-          placeholder="Username"
-          placeholderTextColor="#ddd"
-          style={styles.input}
-        />
-
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          placeholder="Email"
-          placeholderTextColor="#ddd"
-          style={styles.input}
-        />
-
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholder="Password"
-          placeholderTextColor="#ddd"
-          style={styles.input}
-        />
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        <Pressable
-          onPress={onSubmit}
-          disabled={!canSubmit}
-          style={({ pressed }) => [
-            styles.button,
-            !canSubmit && styles.buttonDisabled,
-            pressed && canSubmit && styles.buttonPressed,
-          ]}
+        <Animated.View
+          style={{ opacity: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }}
+          pointerEvents={isLogin ? "auto" : "none"}
         >
-          {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Register</Text>}
-        </Pressable>
+          <Text style={styles.title}>Welcome back</Text>
+          <Text style={styles.subtitle}>Sign in to pick your next movie.</Text>
+          <View style={styles.card}>
+            <TextInput
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="Username"
+              placeholderTextColor="#ddd"
+              style={styles.input}
+            />
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="Password"
+              placeholderTextColor="#ddd"
+              style={styles.input}
+            />
+            {error && isLogin ? <Text style={styles.error}>{error}</Text> : null}
+            {unverifiedEmail && isLogin ? (
+              <View style={styles.unverifiedContainer}>
+                <Text style={styles.unverifiedText}>
+                  To sign in you need to verify your email first.{" "}
+                  <Text style={styles.verifyLink} onPress={() => setModalVisible(true)}>
+                    Verify email
+                  </Text>
+                </Text>
+              </View>
+            ) : null}
+            <Pressable
+              onPress={handleLogin}
+              disabled={!canSubmitLogin}
+              style={({ pressed }) => [
+                styles.button,
+                !canSubmitLogin && styles.buttonDisabled,
+                pressed && canSubmitLogin && styles.buttonPressed,
+              ]}
+            >
+              {submitting && isLogin ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Log in</Text>}
+            </Pressable>
+            <Pressable onPress={toggleMode} style={styles.linkButton}>
+              <Text style={styles.linkText}>New here? <Text style={{ color: colors.text.secondary, fontSize: 14, textDecorationLine: "underline" }}>Create an account</Text></Text>
+            </Pressable>
+          </View>
+        </Animated.View>
 
-        <Pressable onPress={() => navigation.goBack()} style={styles.linkButton}>
-          <Text style={styles.linkText}>Already have an account? <Text style={{ color: colors.text.secondary, fontSize: 14, textDecorationLine: "underline" }}>Log in</Text></Text>
-        </Pressable>
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { opacity: fadeAnim, padding: 20, justifyContent: "center" }]}
+          pointerEvents={isLogin ? "none" : "auto"}
+        >
+          <Text style={styles.title}>Create account</Text>
+          <Text style={styles.subtitle}>Save your picks and keep your list synced.</Text>
+          <View style={styles.card}>
+            <TextInput
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="Username"
+              placeholderTextColor="#ddd"
+              style={styles.input}
+            />
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              placeholder="Email"
+              placeholderTextColor="#ddd"
+              style={styles.input}
+            />
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="Password"
+              placeholderTextColor="#ddd"
+              style={styles.input}
+            />
+            {error && !isLogin ? <Text style={styles.error}>{error}</Text> : null}
+            <Pressable
+              onPress={handleRegister}
+              disabled={!canSubmitRegister}
+              style={({ pressed }) => [
+                styles.button,
+                !canSubmitRegister && styles.buttonDisabled,
+                pressed && canSubmitRegister && styles.buttonPressed,
+              ]}
+            >
+              {submitting && !isLogin ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Register</Text>}
+            </Pressable>
+            <Pressable onPress={toggleMode} style={styles.linkButton}>
+              <Text style={styles.linkText}>Already have an account? <Text style={{ color: colors.text.secondary, fontSize: 14, textDecorationLine: "underline" }}>Log in</Text></Text>
+            </Pressable>
+          </View>
+        </Animated.View>
       </View>
 
       <Modal
@@ -379,9 +493,8 @@ export function RegisterScreen({ navigation }) {
               <>
                 <Text style={styles.modalTitle}>Verify your email</Text>
                 <Text style={styles.modalSubtitle}>
-                  We sent a 6-digit code to{"\n"}{email}
+                  We sent a 6-digit code to{"\n"}{isLogin ? unverifiedEmail : email}
                 </Text>
-
                 <TextInput
                   style={styles.codeInput}
                   placeholder="Enter code"
@@ -394,9 +507,7 @@ export function RegisterScreen({ navigation }) {
                   keyboardType="number-pad"
                   maxLength={6}
                 />
-
                 {verifyError ? <Text style={styles.errorText}>{verifyError}</Text> : null}
-
                 <Pressable
                   style={[styles.verifyButton, verifying && styles.buttonDisabled]}
                   onPress={handleVerify}
@@ -408,7 +519,6 @@ export function RegisterScreen({ navigation }) {
                     <Text style={styles.verifyButtonText}>Verify</Text>
                   )}
                 </Pressable>
-
                 <Pressable
                   style={styles.resendButton}
                   onPress={handleResend}
@@ -425,7 +535,6 @@ export function RegisterScreen({ navigation }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-      </View>
     </View>
   );
 }

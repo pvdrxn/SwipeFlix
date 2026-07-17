@@ -1,6 +1,9 @@
-import React, { useContext, useState, useMemo } from "react";
+import React, { useContext, useState, useMemo, useRef, useEffect } from "react";
 import {
   ActivityIndicator,
+  Animated,
+  Dimensions,
+  Easing,
   Pressable,
   StyleSheet,
   Text,
@@ -9,7 +12,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
-  ImageBackground,
+  Image,
 } from "react-native";
 import { AuthContext } from "../auth/AuthContext";
 import { verifyEmail, resendCode } from "../api/authApi";
@@ -31,6 +34,22 @@ export function LoginScreen({ navigation }) {
   const [resending, setResending] = useState(false);
   const [verified, setVerified] = useState(false);
 
+  const screenHeight = Dimensions.get("window").height;
+  const scrollAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.timing(scrollAnim, {
+        toValue: -screenHeight,
+        duration: 40000,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      })
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [scrollAnim, screenHeight]);
+
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
@@ -42,38 +61,45 @@ export function LoginScreen({ navigation }) {
       padding: 20,
       backgroundColor: "rgba(0,0,0,0.35)",
     },
+    logoContainer: {
+      position: "absolute",
+      top: -5,
+      left: 0,
+      right: 0,
+      alignItems: "center",
+    },
+    logo: {
+      width: 800,
+      height: 240,
+    },
     title: {
       color: colors.text.primary,
       fontSize: 32,
       fontWeight: "700",
       marginBottom: 6,
+      textAlign: "center",
     },
     subtitle: {
       color: colors.text.secondary,
       fontSize: 16,
       marginBottom: 24,
+      textAlign: "center",
     },
     card: {
-      backgroundColor: "#000000",
-      borderColor: "rgba(255,255,255,0.1)",
-      borderWidth: 1,
-      borderRadius: 16,
       padding: 16,
-    },
-    label: {
-      color: colors.text.primary,
-      fontSize: 13,
-      marginTop: 10,
-      marginBottom: 6,
+      gap: 12,
     },
     input: {
-      backgroundColor: colors.bg.elevated,
-      borderColor: colors.bg.elevated,
-      borderWidth: 1,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
+      backgroundColor: "transparent",
+      borderBottomWidth: 1,
+      borderBottomColor: colors.accent,
+      borderRadius: 0,
+      paddingHorizontal: 2,
+      paddingTop: 20,
+      paddingBottom: 0,
+      minHeight: 44,
       color: colors.text.primary,
+      fontSize: 16,
     },
     error: {
       color: colors.accentSecondary,
@@ -96,10 +122,10 @@ export function LoginScreen({ navigation }) {
       textDecorationLine: "underline",
     },
     button: {
-      marginTop: 16,
+      marginTop: 50,
       backgroundColor: colors.accent,
-      borderRadius: 12,
-      paddingVertical: 12,
+      borderRadius: 8,
+      paddingVertical: 13,
       alignItems: "center",
     },
     buttonPressed: {
@@ -120,7 +146,6 @@ export function LoginScreen({ navigation }) {
     linkText: {
       color: colors.text.secondary,
       fontSize: 14,
-      textDecorationLine: "underline",
     },
     modalOverlay: {
       flex: 1,
@@ -267,28 +292,43 @@ export function LoginScreen({ navigation }) {
   const canSubmit = username.trim().length > 0 && password.length > 0 && !submitting;
 
   return (
-      <ImageBackground source={require("../../assets/loginbg.jpg")} style={styles.container} resizeMode="cover" blurRadius={4}>
+      <View style={styles.container}>
+      <Animated.Image
+        source={require("../../assets/loginbg.jpg")}
+        style={[StyleSheet.absoluteFill, { transform: [{ translateY: scrollAnim }] }]}
+        resizeMode="cover"
+        blurRadius={3}
+      />
+      <Animated.Image
+        source={require("../../assets/loginbg.jpg")}
+        style={[StyleSheet.absoluteFill, { transform: [{ translateY: Animated.add(scrollAnim, screenHeight) }] }]}
+        resizeMode="cover"
+        blurRadius={3}
+      />
       <View style={styles.overlay}>
+      <View style={styles.logoContainer}>
+        <Image source={require("../../assets/logo_impact_condensed.png")} style={styles.logo} resizeMode="contain" />
+      </View>
       <Text style={styles.title}>Welcome back</Text>
       <Text style={styles.subtitle}>Sign in to pick your next movie.</Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Username</Text>
         <TextInput
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
           autoCorrect={false}
           placeholder="Username"
+          placeholderTextColor="#ddd"
           style={styles.input}
         />
 
-        <Text style={styles.label}>Password</Text>
         <TextInput
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          placeholder="••••••••"
+          placeholder="Password"
+          placeholderTextColor="#ddd"
           style={styles.input}
         />
 
@@ -318,7 +358,7 @@ export function LoginScreen({ navigation }) {
         </Pressable>
 
         <Pressable onPress={() => navigation.navigate("Register")} style={styles.linkButton}>
-          <Text style={styles.linkText}>New here? Create an account</Text>
+          <Text style={styles.linkText}>New here? <Text style={{ color: colors.text.secondary, fontSize: 14, textDecorationLine: "underline" }}>Create an account</Text></Text>
         </Pressable>
       </View>
 
@@ -393,6 +433,6 @@ export function LoginScreen({ navigation }) {
         </KeyboardAvoidingView>
       </Modal>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
