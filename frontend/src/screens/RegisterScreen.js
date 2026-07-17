@@ -134,14 +134,14 @@ export function RegisterScreen({ navigation }) {
       height: 240,
     },
     title: {
-      color: colors.text.primary,
+      color: "#fff",
       fontSize: 32,
       fontWeight: "700",
       marginBottom: 6,
       textAlign: "center",
     },
     subtitle: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 16,
       marginBottom: 24,
       textAlign: "center",
@@ -159,7 +159,7 @@ export function RegisterScreen({ navigation }) {
       paddingTop: 20,
       paddingBottom: 0,
       minHeight: 44,
-      color: colors.text.primary,
+      color: "#fff",
       fontSize: 16,
     },
     error: {
@@ -180,7 +180,7 @@ export function RegisterScreen({ navigation }) {
       opacity: 0.5,
     },
     buttonText: {
-      color: colors.text.primary,
+      color: "#fff",
       fontWeight: "700",
       fontSize: 16,
     },
@@ -189,7 +189,7 @@ export function RegisterScreen({ navigation }) {
       alignItems: "center",
     },
     linkText: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 14,
     },
     modalOverlay: {
@@ -213,18 +213,18 @@ export function RegisterScreen({ navigation }) {
       padding: 4,
     },
     closeButtonText: {
-      color: colors.text.muted,
+      color: "#fff",
       fontSize: 20,
       fontWeight: "600",
     },
     modalTitle: {
-      color: colors.text.primary,
+      color: "#fff",
       fontSize: 20,
       fontWeight: "700",
       marginBottom: 8,
     },
     modalSubtitle: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 14,
       textAlign: "center",
       marginBottom: 24,
@@ -236,7 +236,7 @@ export function RegisterScreen({ navigation }) {
       borderRadius: 10,
       paddingHorizontal: 16,
       paddingVertical: 14,
-      color: colors.text.primary,
+      color: "#fff",
       fontSize: 24,
       fontWeight: "700",
       textAlign: "center",
@@ -267,7 +267,7 @@ export function RegisterScreen({ navigation }) {
       paddingVertical: 8,
     },
     resendText: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 14,
       textDecorationLine: "underline",
     },
@@ -352,7 +352,7 @@ export function RegisterScreen({ navigation }) {
         </Pressable>
 
         <Pressable onPress={() => navigation.goBack()} style={styles.linkButton}>
-          <Text style={styles.linkText}>Already have an account? <Text style={{ color: colors.text.secondary, fontSize: 14, textDecorationLine: "underline" }}>Log in</Text></Text>
+          <Text style={styles.linkText}>Already have an account? <Text style={{ color: "#fff", fontSize: 14, textDecorationLine: "underline" }}>Log in</Text></Text>
         </Pressable>
       </View>
 
@@ -385,7 +385,7 @@ export function RegisterScreen({ navigation }) {
                 <TextInput
                   style={styles.codeInput}
                   placeholder="Enter code"
-                  placeholderTextColor={colors.text.muted}
+                  placeholderTextColor={"#fff"}
                   value={code}
                   onChangeText={(text) => {
                     setCode(text);
@@ -415,7 +415,7 @@ export function RegisterScreen({ navigation }) {
                   disabled={resending}
                 >
                   {resending ? (
-                    <ActivityIndicator color={colors.text.secondary} size="small" />
+                    <ActivityIndicator color={"#fff"} size="small" />
                   ) : (
                     <Text style={styles.resendText}>Resend code</Text>
                   )}

@@ -120,6 +120,7 @@
     "whereToWatch": "Dónde ver",
     "min": "min",
     "dir": "Dir.",
-    "na": "N/A"
+    "na": "N/A",
+    "recommendationsTitle": "Usuarios que vieron esta película también vieron:"
   }
 }

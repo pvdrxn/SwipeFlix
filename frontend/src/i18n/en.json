@@ -120,6 +120,7 @@
     "whereToWatch": "Where to Watch",
     "min": "min",
     "dir": "Dir.",
-    "na": "N/A"
+    "na": "N/A",
+    "recommendationsTitle": "Users who watched this movie also watched:"
   }
 }

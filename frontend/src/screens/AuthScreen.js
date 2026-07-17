@@ -179,14 +179,14 @@ export function AuthScreen() {
       height: 240,
     },
     title: {
-      color: colors.text.primary,
+      color: "#fff",
       fontSize: 32,
       fontWeight: "700",
       marginBottom: 6,
       textAlign: "center",
     },
     subtitle: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 16,
       marginBottom: 24,
       textAlign: "center",
@@ -204,7 +204,7 @@ export function AuthScreen() {
       paddingTop: 20,
       paddingBottom: 0,
       minHeight: 44,
-      color: colors.text.primary,
+      color: "#fff",
       fontSize: 16,
     },
     error: {
@@ -218,7 +218,7 @@ export function AuthScreen() {
       marginTop: 10,
     },
     unverifiedText: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 13,
       lineHeight: 18,
     },
@@ -241,7 +241,7 @@ export function AuthScreen() {
       opacity: 0.5,
     },
     buttonText: {
-      color: colors.text.primary,
+      color: "#fff",
       fontWeight: "700",
       fontSize: 16,
     },
@@ -250,7 +250,7 @@ export function AuthScreen() {
       alignItems: "center",
     },
     linkText: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 14,
     },
     modalOverlay: {
@@ -274,18 +274,18 @@ export function AuthScreen() {
       padding: 4,
     },
     closeButtonText: {
-      color: colors.text.muted,
+      color: "#fff",
       fontSize: 20,
       fontWeight: "600",
     },
     modalTitle: {
-      color: colors.text.primary,
+      color: "#fff",
       fontSize: 20,
       fontWeight: "700",
       marginBottom: 8,
     },
     modalSubtitle: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 14,
       textAlign: "center",
       marginBottom: 24,
@@ -297,7 +297,7 @@ export function AuthScreen() {
       borderRadius: 10,
       paddingHorizontal: 16,
       paddingVertical: 14,
-      color: colors.text.primary,
+      color: "#fff",
       fontSize: 24,
       fontWeight: "700",
       textAlign: "center",
@@ -328,7 +328,7 @@ export function AuthScreen() {
       paddingVertical: 8,
     },
     resendText: {
-      color: colors.text.secondary,
+      color: "#fff",
       fontSize: 14,
       textDecorationLine: "underline",
     },
@@ -412,7 +412,7 @@ export function AuthScreen() {
               {submitting && isLogin ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Log in</Text>}
             </Pressable>
             <Pressable onPress={toggleMode} style={styles.linkButton}>
-              <Text style={styles.linkText}>New here? <Text style={{ color: colors.text.secondary, fontSize: 14, textDecorationLine: "underline" }}>Create an account</Text></Text>
+              <Text style={styles.linkText}>New here? <Text style={{ color: "#fff", fontSize: 14, textDecorationLine: "underline" }}>Create an account</Text></Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -464,7 +464,7 @@ export function AuthScreen() {
               {submitting && !isLogin ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Register</Text>}
             </Pressable>
             <Pressable onPress={toggleMode} style={styles.linkButton}>
-              <Text style={styles.linkText}>Already have an account? <Text style={{ color: colors.text.secondary, fontSize: 14, textDecorationLine: "underline" }}>Log in</Text></Text>
+              <Text style={styles.linkText}>Already have an account? <Text style={{ color: "#fff", fontSize: 14, textDecorationLine: "underline" }}>Log in</Text></Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -498,7 +498,7 @@ export function AuthScreen() {
                 <TextInput
                   style={styles.codeInput}
                   placeholder="Enter code"
-                  placeholderTextColor={colors.text.muted}
+                  placeholderTextColor={"#fff"}
                   value={code}
                   onChangeText={(text) => {
                     setCode(text);
@@ -525,7 +525,7 @@ export function AuthScreen() {
                   disabled={resending}
                 >
                   {resending ? (
-                    <ActivityIndicator color={colors.text.secondary} size="small" />
+                    <ActivityIndicator color={"#fff"} size="small" />
                   ) : (
                     <Text style={styles.resendText}>Resend code</Text>
                   )}

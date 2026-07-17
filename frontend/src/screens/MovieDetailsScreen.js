@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, ScrollView, Pressable, Dimensions, Anima
 import * as WebBrowser from "expo-web-browser";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { fetchMovieDetails, fetchMovieCredits, fetchMovieWatchProviders, fetchMovieTrailer, fetchMovieReleaseDates } from "../services/tmdb";
+import { fetchMovieDetails, fetchMovieCredits, fetchMovieWatchProviders, fetchMovieTrailer, fetchMovieReleaseDates, fetchMovieRecommendations } from "../services/tmdb";
 import { addPick, deletePick, getPicks, subscribePicks, subscribeWatched, getWatchedPicks, toggleWatched, toggleSave, toggleFavorite, getFavorites, subscribeFavorites } from "../api/picksApi";
 import { useTheme } from "../theme";
 import { LanguageContext } from "../context/LanguageContext";
@@ -19,6 +19,7 @@ export function MovieDetailsScreen({ route, navigation }) {
   const [watchProviders, setWatchProviders] = useState(null);
   const [trailer, setTrailer] = useState(null);
   const [releaseDates, setReleaseDates] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(!initialMovieData);
 
   const handlePlayTrailer = async () => {
@@ -26,6 +27,16 @@ export function MovieDetailsScreen({ route, navigation }) {
       await WebBrowser.openBrowserAsync(`https://www.youtube.com/watch?v=${trailer.key}`);
     }
   };
+
+  const [titleFontSize, setTitleFontSize] = useState(22);
+  const titleSizeRef = useRef(22);
+
+  const handleTitleLayout = useCallback((e) => {
+    if (e.nativeEvent.lines.length > 2 && titleSizeRef.current > 14) {
+      titleSizeRef.current -= 1;
+      setTitleFontSize(titleSizeRef.current);
+    }
+  }, []);
 
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -48,13 +59,15 @@ export function MovieDetailsScreen({ route, navigation }) {
       fetchMovieWatchProviders(movieId),
       fetchMovieTrailer(movieId),
       fetchMovieReleaseDates(movieId),
+      fetchMovieRecommendations(movieId),
     ])
-      .then(([details, creditsData, providersData, trailerData, releaseData]) => {
+      .then(([details, creditsData, providersData, trailerData, releaseData, recsData]) => {
         setMovie(details);
         setCredits(creditsData);
         setWatchProviders(providersData);
         setTrailer(trailerData);
         setReleaseDates(releaseData);
+        setRecommendations(recsData.results?.slice(0, 10) || []);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -352,11 +365,11 @@ export function MovieDetailsScreen({ route, navigation }) {
     headerInfo: {
       flex: 1,
       marginLeft: 16,
-      justifyContent: "center",
+      justifyContent: "flex-start",
+      marginTop: -10,
     },
     title: {
       color: colors.text.primary,
-      fontSize: 22,
       fontWeight: "800",
       marginBottom: 4,
       flexShrink: 1,
@@ -522,30 +535,61 @@ export function MovieDetailsScreen({ route, navigation }) {
       fontSize: 16,
       textAlign: "center",
     },
-    providerScroll: {
+    posterBottomRow: {
       flexDirection: "row",
+      paddingHorizontal: 16,
+      marginTop: -4,
+      marginBottom: 4,
     },
-    providerItem: {
+    posterBottomRowInner: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    headerProviderItem: {
       alignItems: "center",
-      marginRight: 16,
-      width: 70,
     },
-    providerLogo: {
-      width: 50,
-      height: 50,
-      borderRadius: 8,
+    headerProviderLogo: {
+      width: 32,
+      height: 32,
+      borderRadius: 6,
       backgroundColor: colors.bg.elevated,
-    },
-    providerName: {
-      color: colors.text.secondary,
-      fontSize: 10,
-      textAlign: "center",
-      marginTop: 4,
     },
     noProvidersText: {
       color: colors.text.tertiary,
       fontSize: 14,
       fontStyle: "italic",
+    },
+    recItem: {
+      width: 110,
+      marginRight: 12,
+    },
+    recPoster: {
+      width: 110,
+      height: 165,
+      borderRadius: 8,
+      backgroundColor: colors.bg.elevated,
+    },
+    recPosterPlaceholder: {
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    recPosterInitials: {
+      color: colors.text.tertiary,
+      fontSize: 28,
+      fontWeight: "700",
+    },
+    recTitle: {
+      color: colors.text.primary,
+      fontSize: 12,
+      fontWeight: "600",
+      marginTop: 6,
+    },
+    recRating: {
+      color: colors.accent,
+      fontSize: 12,
+      fontWeight: "500",
+      marginTop: 2,
     },
   }), [colors]);
 
@@ -602,7 +646,7 @@ export function MovieDetailsScreen({ route, navigation }) {
           </View>
           <View style={styles.headerInfo}>
             <View style={styles.titleRow}>
-              <Text style={styles.title}>{movie.title}</Text>
+              <Text style={[styles.title, { fontSize: titleFontSize }]} numberOfLines={2} onTextLayout={handleTitleLayout}>{movie.title}</Text>
             </View>
             <View style={styles.ratingRow}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -641,6 +685,28 @@ export function MovieDetailsScreen({ route, navigation }) {
             </View>
           </View>
         </View>
+        {watchProviders?.results && Object.keys(watchProviders.results).length > 0 && (() => {
+          const region = Object.keys(watchProviders.results)[0];
+          const providerData = watchProviders.results[region];
+          const providers = providerData?.flatrate || providerData?.rent || providerData?.buy || [];
+          if (providers.length === 0) return null;
+          return (
+            <View style={styles.posterBottomRow}>
+              <View style={styles.posterBottomRowInner}>
+                {providers.map((provider) => (
+                  <View key={provider.provider_id} style={styles.headerProviderItem}>
+                    {provider.logo_path && (
+                      <Image
+                        source={{ uri: `https://image.tmdb.org/t/p/w92${provider.logo_path}` }}
+                        style={styles.headerProviderLogo}
+                      />
+                    )}
+                  </View>
+                ))}
+              </View>
+            </View>
+          );
+        })()}
 
         {movie.tagline ? (
           <View style={[styles.section, { paddingBottom: 0 }]}>
@@ -682,30 +748,44 @@ export function MovieDetailsScreen({ route, navigation }) {
           </ScrollView>
         </View>
 
-        {watchProviders?.results && Object.keys(watchProviders.results).length > 0 && (() => {
-            const region = Object.keys(watchProviders.results)[0];
-            const providerData = watchProviders.results[region];
-            const providers = providerData?.flatrate || providerData?.rent || providerData?.buy || [];
-            if (providers.length === 0) return null;
-            return (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t("details.whereToWatch")}</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.providerScroll}>
-                  {providers.map((provider) => (
-                    <View key={provider.provider_id} style={styles.providerItem}>
-                      {provider.logo_path && (
-                        <Image
-                          source={{ uri: `https://image.tmdb.org/t/p/w92${provider.logo_path}` }}
-                          style={styles.providerLogo}
-                        />
-                      )}
-                      <Text style={styles.providerName}>{provider.provider_name}</Text>
+        {recommendations.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t("details.recommendationsTitle")}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {recommendations.map((rec) => (
+                <Pressable
+                  key={rec.id}
+                  style={styles.recItem}
+                  onPress={() =>
+                    navigation.push("MovieDetails", {
+                      movieId: rec.id,
+                      initialMovieData: rec,
+                    })
+                  }
+                >
+                  {rec.poster_path ? (
+                    <Image
+                      source={{ uri: `https://image.tmdb.org/t/p/w185${rec.poster_path}` }}
+                      style={styles.recPoster}
+                    />
+                  ) : (
+                    <View style={[styles.recPoster, styles.recPosterPlaceholder]}>
+                      <Text style={styles.recPosterInitials}>
+                        {rec.title.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                      </Text>
                     </View>
-                  ))}
-                </ScrollView>
-              </View>
-            );
-          })()}
+                  )}
+                  <Text style={styles.recTitle} numberOfLines={2}>
+                    {rec.title}
+                  </Text>
+                  <Text style={styles.recRating}>
+                    {rec.vote_average != null ? Number(rec.vote_average).toFixed(1) : t("details.na")}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
       <View style={styles.stickyHeader}>
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
