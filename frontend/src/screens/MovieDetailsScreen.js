@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
-import { View, Text, Image, StyleSheet, ScrollView, Pressable, Dimensions, Animated } from "react-native";
+import Animated, { useSharedValue, withSpring, useAnimatedStyle } from "react-native-reanimated";
+import { View, Text, Image, StyleSheet, ScrollView, Pressable, Dimensions } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -46,11 +47,17 @@ export function MovieDetailsScreen({ route, navigation }) {
   const [isWatched, setIsWatched] = useState(false);
   const [isPassed, setIsPassed] = useState(false);
   const [isFaved, setIsFaved] = useState(false);
-  const favScale = useRef(new Animated.Value(1)).current;
-  const likeScale = useRef(new Animated.Value(1)).current;
-  const passScale = useRef(new Animated.Value(1)).current;
-  const watchScale = useRef(new Animated.Value(1)).current;
-  const heartScale = useRef(new Animated.Value(1)).current;
+  const favScale = useSharedValue(1);
+  const likeScale = useSharedValue(1);
+  const passScale = useSharedValue(1);
+  const watchScale = useSharedValue(1);
+  const heartScale = useSharedValue(1);
+
+  const watchStyle = useAnimatedStyle(() => ({ transform: [{ scale: watchScale.value }] }));
+  const favStyle = useAnimatedStyle(() => ({ transform: [{ scale: favScale.value }] }));
+  const heartStyle = useAnimatedStyle(() => ({ transform: [{ scale: heartScale.value }] }));
+  const likeStyle = useAnimatedStyle(() => ({ transform: [{ scale: likeScale.value }] }));
+  const passStyle = useAnimatedStyle(() => ({ transform: [{ scale: passScale.value }] }));
 
   useEffect(() => {
     Promise.all([
@@ -793,8 +800,8 @@ export function MovieDetailsScreen({ route, navigation }) {
         </Pressable>
         <View style={styles.stickyActions}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Pressable onPressIn={() => Animated.spring(watchScale, { toValue: 0.8, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPressOut={() => Animated.spring(watchScale, { toValue: 1, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPress={handleToggleWatched}>
-              <Animated.View style={{ transform: [{ scale: watchScale }] }}>
+            <Pressable onPressIn={() => { watchScale.value = withSpring(0.8, { damping: 10, stiffness: 200 }); }} onPressOut={() => { watchScale.value = withSpring(1, { damping: 10, stiffness: 200 }); }} onPress={handleToggleWatched}>
+              <Animated.View style={watchStyle}>
               <Feather
                 name="eye"
                 size={24}
@@ -802,8 +809,8 @@ export function MovieDetailsScreen({ route, navigation }) {
               />
               </Animated.View>
             </Pressable>
-            <Pressable onPressIn={() => Animated.spring(favScale, { toValue: 0.8, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPressOut={() => Animated.spring(favScale, { toValue: 1, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPress={handleToggleFavorite} style={{ marginLeft: 16 }}>
-              <Animated.View style={{ transform: [{ scale: favScale }] }}>
+            <Pressable onPressIn={() => { favScale.value = withSpring(0.8, { damping: 10, stiffness: 200 }); }} onPressOut={() => { favScale.value = withSpring(1, { damping: 10, stiffness: 200 }); }} onPress={handleToggleFavorite} style={{ marginLeft: 16 }}>
+              <Animated.View style={favStyle}>
               <Feather
                 name="bookmark"
                 size={24}
@@ -811,8 +818,8 @@ export function MovieDetailsScreen({ route, navigation }) {
               />
               </Animated.View>
             </Pressable>
-            <Pressable onPressIn={() => Animated.spring(heartScale, { toValue: 0.8, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPressOut={() => Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPress={handleToggleFavoriteHeart} style={{ marginLeft: 16 }}>
-              <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+            <Pressable onPressIn={() => { heartScale.value = withSpring(0.8, { damping: 10, stiffness: 200 }); }} onPressOut={() => { heartScale.value = withSpring(1, { damping: 10, stiffness: 200 }); }} onPress={handleToggleFavoriteHeart} style={{ marginLeft: 16 }}>
+              <Animated.View style={heartStyle}>
               <Feather
                 name="star"
                 size={24}
@@ -821,8 +828,8 @@ export function MovieDetailsScreen({ route, navigation }) {
               </Animated.View>
             </Pressable>
           </View>
-          <Pressable onPressIn={() => Animated.spring(likeScale, { toValue: 0.8, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPressOut={() => Animated.spring(likeScale, { toValue: 1, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPress={handleToggleLike} style={{ marginTop: 14 }}>
-            <Animated.View style={{ transform: [{ scale: likeScale }] }}>
+          <Pressable onPressIn={() => { likeScale.value = withSpring(0.8, { damping: 10, stiffness: 200 }); }} onPressOut={() => { likeScale.value = withSpring(1, { damping: 10, stiffness: 200 }); }} onPress={handleToggleLike} style={{ marginTop: 14 }}>
+            <Animated.View style={likeStyle}>
             <Feather
               name="thumbs-up"
               size={24}
@@ -830,8 +837,8 @@ export function MovieDetailsScreen({ route, navigation }) {
             />
             </Animated.View>
           </Pressable>
-          <Pressable onPressIn={() => Animated.spring(passScale, { toValue: 0.8, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPressOut={() => Animated.spring(passScale, { toValue: 1, useNativeDriver: true, damping: 10, stiffness: 200 }).start()} onPress={handleTogglePassed} style={{ marginTop: 14 }}>
-            <Animated.View style={{ transform: [{ scale: passScale }] }}>
+          <Pressable onPressIn={() => { passScale.value = withSpring(0.8, { damping: 10, stiffness: 200 }); }} onPressOut={() => { passScale.value = withSpring(1, { damping: 10, stiffness: 200 }); }} onPress={handleTogglePassed} style={{ marginTop: 14 }}>
+            <Animated.View style={passStyle}>
             <Feather
               name="thumbs-down"
               size={24}

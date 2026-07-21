@@ -11,7 +11,8 @@ import { MovieDetailsScreen } from "../screens/MovieDetailsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { useTheme } from "../theme";
 import { Feather } from "@expo/vector-icons";
-import { ActivityIndicator, View, Animated, Pressable, Dimensions } from "react-native";
+import Animated, { useSharedValue, withSpring, useAnimatedStyle } from "react-native-reanimated";
+import { ActivityIndicator, View, Pressable, Dimensions } from "react-native";
 import { withFadeTransition } from "../components/AnimatedScreen";
 import { AnimatedSplash } from "../components/AnimatedSplash";
 
@@ -45,30 +46,24 @@ const TAB_ICONS = {
 };
 
 function TabItem({ route, isFocused, color, onPress }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useSharedValue(1);
+  const translateY = useSharedValue(0);
 
   useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: isFocused ? 1.2 : 1,
-      useNativeDriver: true,
-      damping: 14,
-      stiffness: 150,
-    }).start();
-    Animated.spring(translateY, {
-      toValue: isFocused ? -6 : 0,
-      useNativeDriver: true,
-      damping: 14,
-      stiffness: 150,
-    }).start();
+    scaleAnim.value = withSpring(isFocused ? 1.2 : 1, { damping: 14, stiffness: 150 });
+    translateY.value = withSpring(isFocused ? -6 : 0, { damping: 14, stiffness: 150 });
   }, [isFocused]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }, { scale: scaleAnim.value }],
+  }));
 
   return (
     <Pressable
       onPress={onPress}
       style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 4 }}
     >
-      <Animated.View style={{ transform: [{ translateY }, { scale: scaleAnim }] }}>
+      <Animated.View style={animatedStyle}>
         <Feather name={TAB_ICONS[route.name]} size={24} color={color} />
       </Animated.View>
     </Pressable>
@@ -77,8 +72,8 @@ function TabItem({ route, isFocused, color, onPress }) {
 
 function CustomTabBar({ state, descriptors, navigation }) {
   const { colors } = useTheme();
-  const indicatorPos = useRef(new Animated.Value(0)).current;
-  const indicatorScale = useRef(new Animated.Value(1)).current;
+  const indicatorPos = useSharedValue(0);
+  const indicatorScale = useSharedValue(1);
   const prevIndex = useRef(0);
   const [barWidth, setBarWidth] = useState(0);
 
@@ -111,30 +106,25 @@ function CustomTabBar({ state, descriptors, navigation }) {
     const tabWidth = barWidth / tabCount;
     const center = tabWidth * selectedIndex + tabWidth / 2;
 
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(indicatorScale, {
-          toValue: 2.5,
-          duration: 60,
-          useNativeDriver: true,
-        }),
-        Animated.spring(indicatorScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          damping: 18,
-          stiffness: 120,
-        }),
-      ]),
-      Animated.spring(indicatorPos, {
-        toValue: center - 4,
-        useNativeDriver: true,
-        damping: 20,
-        stiffness: 150,
-      }),
-    ]).start();
+    indicatorScale.value = withSpring(2.5, { damping: 18, stiffness: 120 });
+    indicatorScale.value = withSpring(1, { damping: 18, stiffness: 120 });
+    indicatorPos.value = withSpring(center - 4, { damping: 20, stiffness: 150 });
 
     prevIndex.current = selectedIndex;
   }, [selectedIndex, tabCount, barWidth]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    position: "absolute",
+    bottom: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
+    transform: [
+      { translateX: indicatorPos.value },
+      { scaleX: indicatorScale.value },
+    ],
+  }));
 
   return (
     <View
@@ -162,18 +152,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
           })}
         </View>
         <Animated.View
-          style={{
-            position: "absolute",
-            bottom: 4,
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: colors.accent,
-            transform: [
-              { translateX: indicatorPos },
-              { scaleX: indicatorScale },
-            ],
-          }}
+          style={indicatorStyle}
         />
       </View>
     </View>

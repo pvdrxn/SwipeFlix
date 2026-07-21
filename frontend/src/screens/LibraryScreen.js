@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
-import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Animated } from "react-native";
+import Animated, { withTiming, makeMutable } from "react-native-reanimated";
+import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { MovieCard } from "../components/MovieCard";
 import { useNavigation } from "@react-navigation/native";
@@ -178,7 +179,7 @@ export function LibraryScreen() {
 
   const getScaleAnim = (key) => {
     if (!scaleAnims.current[key]) {
-      scaleAnims.current[key] = new Animated.Value(1);
+      scaleAnims.current[key] = makeMutable(1);
     }
     return scaleAnims.current[key];
   };
@@ -186,18 +187,10 @@ export function LibraryScreen() {
   const handleChipPress = (key) => {
     const prev = selectedChip;
     if (prev && scaleAnims.current[prev]) {
-      Animated.timing(scaleAnims.current[prev], {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      scaleAnims.current[prev].value = withTiming(1, { duration: 200 });
     }
     if (key !== prev) {
-      Animated.timing(getScaleAnim(key), {
-        toValue: 1.08,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      getScaleAnim(key).value = withTiming(1.08, { duration: 200 });
     }
     setSelectedChip(key);
   };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from "react";
-import { Animated, Pressable, StyleSheet, Text, View, FlatList, ScrollView, RefreshControl, TextInput } from "react-native";
+import Animated, { useSharedValue, withTiming, withRepeat, useAnimatedStyle, makeMutable, cancelAnimation, interpolate as reInterpolate } from "react-native-reanimated";
+import { Pressable, StyleSheet, Text, View, FlatList, ScrollView, RefreshControl, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
@@ -47,13 +48,13 @@ export function HomeScreen() {
   const [recommendedFromMovie, setRecommendedFromMovie] = useState(null);
 
   const debounceRef = useRef(null);
-  const rotation = useRef(new Animated.Value(0)).current;
-  const filterAnim = useRef(new Animated.Value(0)).current;
+  const rotation = useSharedValue(0);
+  const filterAnim = useSharedValue(0);
   const scaleAnims = useRef({});
 
   const getScaleAnim = (id) => {
     if (!scaleAnims.current[id]) {
-      scaleAnims.current[id] = new Animated.Value(1);
+      scaleAnims.current[id] = makeMutable(1);
     }
     return scaleAnims.current[id];
   };
@@ -61,11 +62,7 @@ export function HomeScreen() {
   const toggleFilters = () => {
     const expanding = !showFilters;
     setShowFilters(expanding);
-    Animated.timing(filterAnim, {
-      toValue: expanding ? 100 : 0,
-      duration: 450,
-      useNativeDriver: false,
-    }).start();
+    filterAnim.value = withTiming(expanding ? 100 : 0, { duration: 450 });
   };
 
   const fetchWatched = async () => {
@@ -116,7 +113,8 @@ export function HomeScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
-      rotation.setValue(0);
+      cancelAnimation(rotation);
+      rotation.value = 0;
     }
   };
 
@@ -140,16 +138,22 @@ export function HomeScreen() {
     if (refreshing) return;
     setRefreshing(true);
     setError(null);
-    Animated.loop(
-      Animated.timing(rotation, { toValue: 1, duration: 1000, useNativeDriver: true })
-    ).start();
+    rotation.value = withRepeat(withTiming(1, { duration: 1000 }), -1, false);
     fetchAllCategories();
   };
 
-  const spin = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
+  const rotationStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${reInterpolate(rotation.value, [0, 1], [0, 360])}deg` }],
+  }));
+
+  const filterPanelStyle = useAnimatedStyle(() => ({
+    height: filterAnim.value,
+    overflow: "hidden",
+  }));
+
+  const filterContentStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: reInterpolate(filterAnim.value, [0, 100], [-100, 0]) }],
+  }));
 
   const doSearch = useCallback(async (q, genreId, sy, ey, rating) => {
     if (!q.trim() && !genreId && !sy && !ey && !rating) {
@@ -195,18 +199,10 @@ export function HomeScreen() {
     const prevId = selectedGenre;
     setSelectedGenre((prev) => (genreId === prev ? null : genreId));
     if (prevId && scaleAnims.current[prevId]) {
-      Animated.timing(scaleAnims.current[prevId], {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      scaleAnims.current[prevId].value = withTiming(1, { duration: 300 });
     }
     if (genreId !== prevId) {
-      Animated.timing(getScaleAnim(genreId), {
-        toValue: 1.05,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      getScaleAnim(genreId).value = withTiming(1.05, { duration: 300 });
     }
   };
 
@@ -376,8 +372,8 @@ export function HomeScreen() {
               <Feather name="sliders" size={24} color={colors.accent} />
             </Pressable>
           </View>
-          <Animated.View style={[{ height: filterAnim, overflow: 'hidden' }]}>
-          <Animated.View style={{ transform: [{ translateY: filterAnim.interpolate({ inputRange: [0, 100], outputRange: [-100, 0] }) }] }}>
+          <Animated.View style={filterPanelStyle}>
+          <Animated.View style={filterContentStyle}>
           {genres.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={styles.filterContent}>
               {genres.map((g) => {
@@ -458,7 +454,7 @@ export function HomeScreen() {
           />
         ) : (loading || refreshing) && !error ? (
           <View style={styles.content}>
-            <Animated.Text style={[styles.loadingText, { transform: [{ rotate: spin }] }]}>↻</Animated.Text>
+            <Animated.Text style={[styles.loadingText, rotationStyle]}>↻</Animated.Text>
             <Text style={styles.statusText}>{refreshing ? t("home.refreshing") : t("home.loading")}</Text>
           </View>
         ) : error ? (

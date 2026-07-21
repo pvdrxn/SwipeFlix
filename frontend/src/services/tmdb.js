@@ -109,7 +109,7 @@ export async function fetchMovieDetails(movieId) {
   return tmdbFetch(`/movie/${movieId}`);
 }
 
-export async function fetchMovieExternalIds(movieId) {
+async function fetchMovieExternalIds(movieId) {
   if (!movieId) throw new Error("movieId is required");
   return tmdbFetch(`/movie/${movieId}/external_ids`);
 }

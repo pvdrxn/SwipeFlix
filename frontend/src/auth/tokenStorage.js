@@ -7,7 +7,7 @@ export async function getAccessToken() {
   return SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
 }
 
-export async function getRefreshToken() {
+async function getRefreshToken() {
   return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
 }
 

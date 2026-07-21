@@ -1,9 +1,8 @@
 import React, { useContext, useState, useMemo, useRef, useEffect } from "react";
+import Animated, { useSharedValue, withTiming, useAnimatedStyle, runOnJS, interpolate } from "react-native-reanimated";
 import {
   ActivityIndicator,
-  Animated,
   Dimensions,
-  Easing,
   Pressable,
   StyleSheet,
   Text,
@@ -41,39 +40,56 @@ export function AuthScreen() {
   const [verified, setVerified] = useState(false);
   const [langModalVisible, setLangModalVisible] = useState(false);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useSharedValue(0);
   const transitioning = useRef(false);
 
   function toggleMode() {
     if (transitioning.current) return;
     transitioning.current = true;
-    const toValue = mode === "login" ? 1 : 0;
-    Animated.timing(fadeAnim, {
-      toValue,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setMode(mode === "login" ? "register" : "login");
-      setError(null);
+    const nextMode = mode === "login" ? "register" : "login";
+    fadeAnim.value = withTiming(mode === "login" ? 1 : 0, { duration: 200 }, () => {
+      runOnJS(setMode)(nextMode);
+      runOnJS(setError)(null);
       transitioning.current = false;
     });
   }
 
   const screenHeight = Dimensions.get("window").height;
-  const scrollAnim = useRef(new Animated.Value(0)).current;
+  const scrollAnim = useSharedValue(0);
 
   useEffect(() => {
-    const anim = Animated.loop(
-      Animated.timing(scrollAnim, {
-        toValue: -screenHeight,
-        duration: 40000,
-        useNativeDriver: true,
-        easing: Easing.linear,
-      })
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [scrollAnim, screenHeight]);
+    let running = true;
+    const startTime = Date.now();
+    const duration = 40000;
+    const distance = screenHeight;
+
+    function frame() {
+      if (!running) return;
+      const elapsed = Date.now() - startTime;
+      const progress = (elapsed % duration) / duration;
+      scrollAnim.value = -progress * distance;
+      requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+    return () => { running = false; };
+  }, [screenHeight]);
+
+  const bgImageStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: scrollAnim.value }],
+  }));
+
+  const bgImageStyle2 = useAnimatedStyle(() => ({
+    transform: [{ translateY: scrollAnim.value + screenHeight }],
+  }));
+
+  const loginStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(fadeAnim.value, [0, 1], [1, 0]),
+  }));
+
+  const registerStyle = useAnimatedStyle(() => ({
+    opacity: fadeAnim.value,
+  }));
 
   async function handleLogin() {
     setError(null);
@@ -389,13 +405,13 @@ export function AuthScreen() {
     <View style={styles.container}>
       <Animated.Image
         source={require("../../assets/loginbg.jpg")}
-        style={[StyleSheet.absoluteFill, { transform: [{ translateY: scrollAnim }] }]}
+        style={[StyleSheet.absoluteFill, bgImageStyle]}
         resizeMode="cover"
         blurRadius={3}
       />
       <Animated.Image
         source={require("../../assets/loginbg.jpg")}
-        style={[StyleSheet.absoluteFill, { transform: [{ translateY: Animated.add(scrollAnim, screenHeight) }] }]}
+        style={[StyleSheet.absoluteFill, bgImageStyle2]}
         resizeMode="cover"
         blurRadius={3}
       />
@@ -407,7 +423,7 @@ export function AuthScreen() {
 
 
         <Animated.View
-          style={{ opacity: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }}
+          style={loginStyle}
           pointerEvents={isLogin ? "auto" : "none"}
         >
           <Text style={styles.title}>{t("auth.welcomeBack")}</Text>
@@ -459,7 +475,7 @@ export function AuthScreen() {
         </Animated.View>
 
         <Animated.View
-          style={[StyleSheet.absoluteFill, { opacity: fadeAnim, padding: 20, justifyContent: "center" }]}
+          style={[StyleSheet.absoluteFill, registerStyle, { padding: 20, justifyContent: "center" }]}
           pointerEvents={isLogin ? "none" : "auto"}
         >
           <Text style={styles.title}>{t("auth.createAccountTitle")}</Text>

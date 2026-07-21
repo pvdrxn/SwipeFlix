@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from "react";
-import { View, Text, Image, StyleSheet, Dimensions, Pressable, ScrollView, Animated, PanResponder, Modal } from "react-native";
+import { View, Text, Image, StyleSheet, Dimensions, Pressable, ScrollView, PanResponder, Modal } from "react-native";
+const LegacyAnimated = require("react-native").Animated;
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchPopularMovies, fetchGenres, fetchMovieCredits, fetchMovieDetails } from "../services/tmdb";
@@ -37,25 +38,25 @@ export function PickScreen() {
   const queuedIdsRef = useRef(new Set());
   const moviesSnapshotRef = useRef([]);
   const expandedRef = useRef(false);
-  const synopsisOpacity = useRef(new Animated.Value(0)).current;
+  const synopsisOpacity = useRef(new LegacyAnimated.Value(0)).current;
   
   
   
 
-  const borderAnim = useRef(new Animated.Value(0)).current;
-  const holdScale = useRef(new Animated.Value(1)).current;
-  const pan = useRef(new Animated.ValueXY()).current;
-  const starStamp = useRef({ opacity: new Animated.Value(0), scale: new Animated.Value(0) }).current;
+  const borderAnim = useRef(new LegacyAnimated.Value(0)).current;
+  const holdScale = useRef(new LegacyAnimated.Value(1)).current;
+  const pan = useRef(new LegacyAnimated.ValueXY()).current;
+  const starStamp = useRef({ opacity: new LegacyAnimated.Value(0), scale: new LegacyAnimated.Value(0) }).current;
   const isSwiping = useRef(false);
-  const rightOverlayOpacity = useRef(new Animated.Value(0)).current;
-  const leftOverlayOpacity = useRef(new Animated.Value(0)).current;
-  const upOverlayOpacity = useRef(new Animated.Value(0)).current;
+  const rightOverlayOpacity = useRef(new LegacyAnimated.Value(0)).current;
+  const leftOverlayOpacity = useRef(new LegacyAnimated.Value(0)).current;
+  const upOverlayOpacity = useRef(new LegacyAnimated.Value(0)).current;
 
   const backCardScale = useRef(
-    Animated.add(
-      new Animated.Value(0.85),
-      Animated.multiply(
-        new Animated.Value(0.15),
+    LegacyAnimated.add(
+      new LegacyAnimated.Value(0.85),
+      LegacyAnimated.multiply(
+        new LegacyAnimated.Value(0.15),
         pan.x.interpolate({
           inputRange: [-SWIPE_THRESHOLD, 0, SWIPE_THRESHOLD],
           outputRange: [1, 0, 1],
@@ -221,7 +222,7 @@ export function PickScreen() {
   useEffect(() => {
     pan.setValue({ x: 0, y: 0 });
     if (expandedRef.current) {
-      Animated.spring(synopsisOpacity, {
+      LegacyAnimated.spring(synopsisOpacity, {
         toValue: 1,
         useNativeDriver: true,
         damping: 12,
@@ -273,7 +274,7 @@ export function PickScreen() {
   const toggleSynopsis = useCallback(() => {
     const toValue = expandedRef.current ? 0 : 1;
     expandedRef.current = !expandedRef.current;
-    Animated.spring(synopsisOpacity, {
+    LegacyAnimated.spring(synopsisOpacity, {
       toValue,
       useNativeDriver: true,
       damping: 12,
@@ -304,18 +305,18 @@ export function PickScreen() {
     queuedIdsRef.current.delete(movie.id);
     starStamp.opacity.setValue(1);
     starStamp.scale.setValue(0);
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(borderAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.timing(holdScale, { toValue: 1.05, duration: 300, useNativeDriver: true }),
-        Animated.spring(starStamp.scale, { toValue: 1, damping: 8, stiffness: 250, useNativeDriver: true }),
+    LegacyAnimated.sequence([
+      LegacyAnimated.parallel([
+        LegacyAnimated.timing(borderAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+        LegacyAnimated.timing(holdScale, { toValue: 1.05, duration: 300, useNativeDriver: true }),
+        LegacyAnimated.spring(starStamp.scale, { toValue: 1, damping: 8, stiffness: 250, useNativeDriver: true }),
       ]),
-      Animated.delay(500),
-      Animated.parallel([
-        Animated.timing(borderAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
-        Animated.timing(holdScale, { toValue: 1, duration: 150, useNativeDriver: true }),
-        Animated.timing(starStamp.opacity, { toValue: 0, duration: 150, useNativeDriver: true }),
-        Animated.timing(starStamp.scale, { toValue: 0.3, duration: 150, useNativeDriver: true }),
+      LegacyAnimated.delay(500),
+      LegacyAnimated.parallel([
+        LegacyAnimated.timing(borderAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
+        LegacyAnimated.timing(holdScale, { toValue: 1, duration: 150, useNativeDriver: true }),
+        LegacyAnimated.timing(starStamp.opacity, { toValue: 0, duration: 150, useNativeDriver: true }),
+        LegacyAnimated.timing(starStamp.scale, { toValue: 0.3, duration: 150, useNativeDriver: true }),
       ]),
     ]).start(() => {
       const idx = cardIndexRef.current;
@@ -336,7 +337,7 @@ export function PickScreen() {
     const targetY = direction === "up" ? -(SCREEN_HEIGHT * 2) : 0;
     const wasExpanded = expandedRef.current;
     const idx = cardIndexRef.current;
-    Animated.timing(pan, {
+    LegacyAnimated.timing(pan, {
       toValue: { x: direction === "up" ? 0 : targetX, y: targetY },
       duration: 200,
       useNativeDriver: true,
@@ -349,7 +350,7 @@ export function PickScreen() {
 
       const nextIndex = idx + 1;
       if (wasExpanded) {
-        Animated.timing(synopsisOpacity, {
+        LegacyAnimated.timing(synopsisOpacity, {
           toValue: 0,
           duration: 150,
           useNativeDriver: true,
@@ -400,7 +401,7 @@ export function PickScreen() {
           rightOverlayOpacity.setValue(0);
           leftOverlayOpacity.setValue(0);
           upOverlayOpacity.setValue(0);
-          Animated.spring(pan, {
+          LegacyAnimated.spring(pan, {
             toValue: { x: 0, y: 0 },
             useNativeDriver: true,
             damping: 15,
@@ -414,7 +415,7 @@ export function PickScreen() {
         rightOverlayOpacity.setValue(0);
         leftOverlayOpacity.setValue(0);
         upOverlayOpacity.setValue(0);
-        Animated.spring(pan, {
+        LegacyAnimated.spring(pan, {
           toValue: { x: 0, y: 0 },
           useNativeDriver: true,
           damping: 15,
@@ -461,7 +462,7 @@ export function PickScreen() {
         <View style={{ flex: 1, borderRadius: 4, overflow: "hidden" }}>
           {isCurrent && (
             <>
-              <Animated.View
+              <LegacyAnimated.View
                 pointerEvents="none"
                 style={{
                   position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
@@ -469,7 +470,7 @@ export function PickScreen() {
                   opacity: rightBorderOpacity, zIndex: 10,
                 }}
               />
-              <Animated.View
+              <LegacyAnimated.View
                 pointerEvents="none"
                 style={{
                   position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
@@ -477,7 +478,7 @@ export function PickScreen() {
                   opacity: leftBorderOpacity, zIndex: 10,
                 }}
               />
-              <Animated.View
+              <LegacyAnimated.View
                 pointerEvents="none"
                 style={{
                   position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
@@ -485,14 +486,14 @@ export function PickScreen() {
                   opacity: upBorderOpacity, zIndex: 10,
                 }}
               />
-              <Animated.View
+              <LegacyAnimated.View
                 pointerEvents="none"
                 style={{
                   position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
                   borderRadius: 4,
                   borderWidth: 2,
                   borderColor: colors.favorite,
-                  opacity: Animated.multiply(borderAnim, 0.9),
+                  opacity: LegacyAnimated.multiply(borderAnim, 0.9),
                   zIndex: 11,
                 }}
               />
@@ -544,7 +545,7 @@ export function PickScreen() {
             </View>
           </LinearGradient>
           {isCurrent && (
-            <Animated.View
+            <LegacyAnimated.View
               pointerEvents="none"
               style={{
                 position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
@@ -560,7 +561,7 @@ export function PickScreen() {
               <Text style={styles.synopsisText} numberOfLines={12} adjustsFontSizeToFit minimumFontScale={0.7}>
                 {movie.overview || "No synopsis available"}
               </Text>
-            </Animated.View>
+            </LegacyAnimated.View>
           )}
         </View>
       </Pressable>
@@ -796,10 +797,10 @@ export function PickScreen() {
 
   return (
     <View style={styles.container}>
-<Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.save, opacity: rightOverlayOpacity }]} />
-      <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.pass, opacity: leftOverlayOpacity }]} />
-      <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.saved, opacity: upOverlayOpacity }]} />
-      <Animated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.favorite, opacity: Animated.multiply(borderAnim, 0.7) }]} />
+<LegacyAnimated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.save, opacity: rightOverlayOpacity }]} />
+      <LegacyAnimated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.pass, opacity: leftOverlayOpacity }]} />
+      <LegacyAnimated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.swipe.saved, opacity: upOverlayOpacity }]} />
+      <LegacyAnimated.View pointerEvents="none" style={[styles.swipeOverlay, { backgroundColor: colors.favorite, opacity: LegacyAnimated.multiply(borderAnim, 0.7) }]} />
       <View style={{ alignItems: "center", paddingBottom: 120 }}>
       <Pressable
         style={styles.infoButton}
@@ -809,11 +810,11 @@ export function PickScreen() {
       </Pressable>
 
       {movies.length > 0 && (
-        <Animated.View
+        <LegacyAnimated.View
           style={styles.swiperContainer}>
           <View style={styles.cardStack}>
             {nextCard && (
-              <Animated.View
+              <LegacyAnimated.View
                 style={[
                   styles.cardStackBack,
                   {
@@ -824,10 +825,10 @@ export function PickScreen() {
                 ]}
               >
                 {renderCard(nextCard, false)}
-              </Animated.View>
+              </LegacyAnimated.View>
             )}
             {topCard && (
-              <Animated.View
+              <LegacyAnimated.View
                 style={[
                   styles.cardStackFront,
                   {
@@ -842,13 +843,13 @@ export function PickScreen() {
                 {...panResponder.panHandlers}
               >
                 {renderCard(topCard, true)}
-              </Animated.View>
+              </LegacyAnimated.View>
             )}
           </View>
-        </Animated.View>
+        </LegacyAnimated.View>
       )}
 
-      <Animated.View pointerEvents="none" style={{
+      <LegacyAnimated.View pointerEvents="none" style={{
         position: "absolute", top: 0, left: 0, right: 0, bottom: 120,
         justifyContent: "center", alignItems: "center", zIndex: 60,
         opacity: starStamp.opacity,
@@ -857,7 +858,7 @@ export function PickScreen() {
         ],
       }}>
         <Ionicons name="star" size={90} color={colors.favorite} />
-      </Animated.View>
+      </LegacyAnimated.View>
 
       </View>
       <Modal
