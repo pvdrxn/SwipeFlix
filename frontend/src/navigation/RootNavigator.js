@@ -11,7 +11,7 @@ import { MovieDetailsScreen } from "../screens/MovieDetailsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { useTheme } from "../theme";
 import { Feather } from "@expo/vector-icons";
-import Animated, { useSharedValue, withSpring, useAnimatedStyle } from "react-native-reanimated";
+import Animated, { useSharedValue, withSpring, withTiming, withSequence, useAnimatedStyle } from "react-native-reanimated";
 import { ActivityIndicator, View, Pressable, Dimensions } from "react-native";
 import { withFadeTransition } from "../components/AnimatedScreen";
 import { AnimatedSplash } from "../components/AnimatedSplash";
@@ -50,8 +50,8 @@ function TabItem({ route, isFocused, color, onPress }) {
   const translateY = useSharedValue(0);
 
   useEffect(() => {
-    scaleAnim.value = withSpring(isFocused ? 1.2 : 1, { damping: 14, stiffness: 150 });
-    translateY.value = withSpring(isFocused ? -6 : 0, { damping: 14, stiffness: 150 });
+    scaleAnim.value = withSpring(isFocused ? 1.2 : 1, { damping: 45, stiffness: 250 });
+    translateY.value = withSpring(isFocused ? -6 : 0, { damping: 45, stiffness: 250 });
   }, [isFocused]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -106,9 +106,11 @@ function CustomTabBar({ state, descriptors, navigation }) {
     const tabWidth = barWidth / tabCount;
     const center = tabWidth * selectedIndex + tabWidth / 2;
 
-    indicatorScale.value = withSpring(2.5, { damping: 18, stiffness: 120 });
-    indicatorScale.value = withSpring(1, { damping: 18, stiffness: 120 });
-    indicatorPos.value = withSpring(center - 4, { damping: 20, stiffness: 150 });
+    indicatorScale.value = withSequence(
+      withTiming(2.5, { duration: 60 }),
+      withSpring(1, { damping: 22, stiffness: 200 })
+    );
+    indicatorPos.value = withSpring(center - 4, { damping: 45, stiffness: 250 });
 
     prevIndex.current = selectedIndex;
   }, [selectedIndex, tabCount, barWidth]);

@@ -340,7 +340,7 @@ export function HomeScreen() {
     backgroundColor: colors.accent,
     marginRight: 8,
   },
-  sectionTitle: { color: colors.text.primary, fontSize: 18, fontWeight: "700" },
+  sectionTitle: { color: colors.text.primary, fontSize: 20, fontWeight: "700" },
   sectionList: { paddingHorizontal: 6 },
   searchResultsContent: { paddingTop: 8, paddingHorizontal: 4 },
   movieItem: { padding: 4 },

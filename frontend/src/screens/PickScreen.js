@@ -517,25 +517,28 @@ export function PickScreen() {
             locations={[0, 0.12, 1]}
             style={styles.cardInfo}
           >
-            <View>
+            <View style={styles.infoGroup}>
               <Text style={styles.cardTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.571}>
                 {movie.title}
               </Text>
               <Text style={styles.cardYear}>
                 {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` • ${runtimes[movie.id]} ${t("details.min")}` : ""}
               </Text>
-            </View>
-            <View style={styles.cardGenres}>
-              {(movie.genre_ids || []).map(id => ({ id, name: genreMap[id] })).filter(g => g.name).map((g, i, arr) => (
-                <React.Fragment key={g.id}>
-                  <Text style={{ color: colors.genreById[g.id] || colors.text.primary, fontSize: 16, fontWeight: "700" }}>
-                    {g.name}
-                  </Text>
-                  {i < arr.length - 1 && (
-                    <Text style={{ color: colors.text.primary, fontSize: 16 }}> · </Text>
-                  )}
-                </React.Fragment>
-              ))}
+              <View style={styles.cardGenres}>
+                {(movie.genre_ids || []).map(id => ({ id, name: genreMap[id] })).filter(g => g.name).map((g, i, arr) => (
+                  <React.Fragment key={g.id}>
+                    <Text style={{ color: colors.genreById[g.id] || colors.text.primary, fontSize: 16, fontWeight: "700" }}>
+                      {g.name}
+                    </Text>
+                    {i < arr.length - 1 && (
+                      <Text style={{ color: colors.text.primary, fontSize: 16 }}> · </Text>
+                    )}
+                  </React.Fragment>
+                ))}
+              </View>
+              {directors[movie.id] ? (
+                <Text style={styles.cardDirector}>Dir. {directors[movie.id]}</Text>
+              ) : null}
             </View>
             <View style={styles.cardRatingRow}>
               <Ionicons name="star" size={22} color={colors.accent} />
@@ -661,6 +664,9 @@ export function PickScreen() {
     justifyContent: "flex-end",
     borderBottomLeftRadius: 4,
     borderBottomRightRadius: 4,
+  },
+  infoGroup: {
+    gap: 4,
   },
   cardTitle: {
     color: colors.text.primary,

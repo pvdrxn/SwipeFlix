@@ -6,7 +6,7 @@ import { useTheme } from "../theme";
 
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
-export function MovieCard({ movie, onPress, watched = false }) {
+export function MovieCard({ movie, onPress, watched = false, director }) {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const cardWidth = (width - 32) / 2 - 20;
@@ -84,6 +84,11 @@ export function MovieCard({ movie, onPress, watched = false }) {
       color: colors.text.tertiary,
       fontSize: 12,
     },
+    director: {
+      color: colors.text.muted,
+      fontSize: 11,
+      marginTop: 2,
+    },
   }), [colors]);
 
   return (
@@ -114,6 +119,9 @@ export function MovieCard({ movie, onPress, watched = false }) {
             </>
           ) : null}
         </View>
+        {director ? (
+          <Text style={styles.director} numberOfLines={1}>Dir. {director}</Text>
+        ) : null}
       </View>
     </Pressable>
   );
