@@ -11,17 +11,14 @@ class PickedMovieSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password')
+        fields = ('id', 'username', 'password')
 
     def create(self, validated_data):
-        # Use Django's built-in password hashing.
         return User.objects.create_user(
             username=validated_data["username"],
-            email=validated_data.get("email", ""),
             password=validated_data["password"],
         )

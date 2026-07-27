@@ -1,12 +1,10 @@
 from django.contrib.auth import authenticate, get_user_model
-from django.core.mail import send_mail
-from django.conf import settings
 User = get_user_model()
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import PickedMovie, EmailVerificationCode
+from .models import PickedMovie
 from .serializers import RegisterSerializer, PickedMovieSerializer
 
 class PickedMovieViewSet(viewsets.ModelViewSet):
@@ -165,20 +163,10 @@ class LoginView(generics.GenericAPIView):
                 "refresh": str(refresh),
             })
 
-        try:
-            inactive = User.objects.get(username=username, is_active=False)
-            return Response(
-                {
-                    "detail": "Email not verified.",
-                    "email": inactive.email,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        except User.DoesNotExist:
-            return Response(
-                {"detail": "Invalid username or password."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        return Response(
+            {"detail": "Invalid username or password."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class RegisterView(generics.CreateAPIView):
@@ -186,32 +174,24 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
-        email = request.data.get("email", "")
-        existing = User.objects.filter(email=email).first()
-        if existing and existing.is_active:
+        username = request.data.get("username", "")
+        if User.objects.filter(username=username).exists():
             return Response(
-                {"detail": "An account with this email already exists."},
+                {"detail": "An account with this username already exists."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if existing and not existing.is_active:
-            existing.delete()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        user.is_active = False
+        user.is_active = True
         user.save(update_fields=["is_active"])
 
-        code = EmailVerificationCode.generate_for_user(user)
-        send_mail(
-            subject="Verify your Movie Picker account",
-            message=f"Your verification code is: {code.code}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-
+        refresh = RefreshToken.for_user(user)
         return Response(
-            {"detail": "Verification code sent to your email."},
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -226,7 +206,6 @@ class MeView(generics.GenericAPIView):
             {
                 "id": user.id,
                 "username": user.username,
-                "email": user.email,
                 "saved_count": saved_count,
                 "pass_count": pass_count,
                 "favorite_count": favorite_count,
@@ -234,195 +213,43 @@ class MeView(generics.GenericAPIView):
         )
 
 
-class VerifyEmailView(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        email = request.data.get("email", "")
-        code = request.data.get("code", "")
-
-        try:
-            user = User.objects.get(email=email, is_active=False)
-        except User.DoesNotExist:
-            return Response(
-                {"detail": "No account found with that email."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            verification = EmailVerificationCode.objects.get(
-                user=user, code=code, purpose="email_verify", is_used=False
-            )
-        except EmailVerificationCode.DoesNotExist:
-            return Response(
-                {"detail": "Invalid or expired code."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        verification.is_used = True
-        verification.save(update_fields=["is_used"])
-        user.is_active = True
-        user.save(update_fields=["is_active"])
-
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-        })
-
-
-class ResendCodeView(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        email = request.data.get("email", "")
-
-        try:
-            user = User.objects.get(email=email, is_active=False)
-        except User.DoesNotExist:
-            return Response(
-                {"detail": "No inactive account found with that email."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        code = EmailVerificationCode.generate_for_user(user)
-        send_mail(
-            subject="Your new Movie Picker verification code",
-            message=f"Your new verification code is: {code.code}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-
-        return Response({"detail": "New code sent to your email."})
-
-
-class SendPasswordCodeView(generics.GenericAPIView):
+class ChangeUsernameView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         user = request.user
-        EmailVerificationCode.objects.filter(
-            user=user, purpose="password_change", is_used=False
-        ).update(is_used=True)
+        new_username = request.data.get("new_username", "").strip()
+        password = request.data.get("password", "")
 
-        code = EmailVerificationCode.generate_for_user(user, purpose="password_change")
-        send_mail(
-            subject="Your Movie Picker password change code",
-            message=f"Your password change code is: {code.code}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-
-        return Response({"detail": "Code sent to your email."})
-
-
-class ChangePasswordView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        user = request.user
-        code = request.data.get("code", "")
-        new_password = request.data.get("new_password", "")
-
-        if len(new_password) < 8:
+        if not new_username:
             return Response(
-                {"detail": "Password must be at least 8 characters."},
+                {"detail": "New username is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            verification = EmailVerificationCode.objects.get(
-                user=user, code=code, purpose="password_change", is_used=False
-            )
-        except EmailVerificationCode.DoesNotExist:
+        if len(new_username) < 3:
             return Response(
-                {"detail": "Invalid or expired code."},
+                {"detail": "Username must be at least 3 characters."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        verification.is_used = True
-        verification.save(update_fields=["is_used"])
-        user.set_password(new_password)
-        user.save(update_fields=["password"])
-
-        return Response({"detail": "Password changed successfully."})
-
-
-class SendEmailCodeView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        user = request.user
-        new_email = request.data.get("new_email", "")
-
-        if not new_email:
+        if User.objects.filter(username=new_username).exclude(id=user.id).exists():
             return Response(
-                {"detail": "New email is required."},
+                {"detail": "An account with this username already exists."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        existing = User.objects.filter(email=new_email).exclude(id=user.id).first()
-        if existing:
+        auth_user = authenticate(username=user.username, password=password)
+        if auth_user is None:
             return Response(
-                {"detail": "This email is already in use."},
+                {"detail": "Incorrect password."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        EmailVerificationCode.objects.filter(
-            user=user, purpose="email_change", is_used=False
-        ).update(is_used=True)
+        user.username = new_username
+        user.save(update_fields=["username"])
 
-        code = EmailVerificationCode.generate_for_user(user, purpose="email_change")
-        send_mail(
-            subject="Your Movie Picker email change code",
-            message=f"Your email change code is: {code.code}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[new_email],
-            fail_silently=False,
-        )
-
-        return Response({"detail": "Code sent to your new email."})
-
-
-class ChangeEmailView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        user = request.user
-        code = request.data.get("code", "")
-        new_email = request.data.get("new_email", "")
-
-        if not new_email or not code:
-            return Response(
-                {"detail": "New email and code are required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        existing = User.objects.filter(email=new_email).exclude(id=user.id).first()
-        if existing:
-            return Response(
-                {"detail": "This email is already in use."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            verification = EmailVerificationCode.objects.get(
-                user=user, code=code, purpose="email_change", is_used=False
-            )
-        except EmailVerificationCode.DoesNotExist:
-            return Response(
-                {"detail": "Invalid or expired code."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        verification.is_used = True
-        verification.save(update_fields=["is_used"])
-        user.email = new_email
-        user.save(update_fields=["email"])
-
-        return Response({"detail": "Email changed successfully."})
+        return Response({"username": user.username})
 
 
 class DeleteAccountView(generics.GenericAPIView):

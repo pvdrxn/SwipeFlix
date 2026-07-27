@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { AuthContext } from "../auth/AuthContext";
-import { me, deleteAccount, sendPasswordCode, changePassword, sendEmailCode, changeEmail } from "../api/authApi";
+import { me, deleteAccount, sendPasswordCode, changePassword, changeUsername } from "../api/authApi";
 import { clearLiked, clearDisliked, clearSaved, clearFavorites, clearAll } from "../api/picksApi";
 import { useTheme } from "../theme";
 import { LanguageContext } from "../context/LanguageContext";
@@ -42,14 +42,12 @@ export function SettingsScreen() {
   const [verifying, setVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState("");
 
-  const [emailStep, setEmailStep] = useState("input");
-  const [newEmail, setNewEmail] = useState("");
-  const [sendingEmailCode, setSendingEmailCode] = useState(false);
-  const [emailChangeError, setEmailChangeError] = useState("");
-  const [emailModalVisible, setEmailModalVisible] = useState(false);
-  const [emailCode, setEmailCode] = useState("");
-  const [verifyingEmail, setVerifyingEmail] = useState(false);
-  const [emailVerifyError, setEmailVerifyError] = useState("");
+  const [usernameModalVisible, setUsernameModalVisible] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [usernamePassword, setUsernamePassword] = useState("");
+  const [showUsernamePassword, setShowUsernamePassword] = useState(false);
+  const [changingUsername, setChangingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
   const [langModalVisible, setLangModalVisible] = useState(false);
 
   const eyeRef = useRef(null);
@@ -435,51 +433,42 @@ export function SettingsScreen() {
     confirmClear(() => clearAll().catch(() => {}), "library");
   }
 
-  function handleOpenEmailModal() {
-    setEmailStep("input");
-    setNewEmail("");
-    setEmailChangeError("");
-    setEmailCode("");
-    setEmailVerifyError("");
-    setEmailModalVisible(true);
+  function handleOpenUsernameModal() {
+    setNewUsername("");
+    setUsernamePassword("");
+    setUsernameError("");
+    setShowUsernamePassword(false);
+    setUsernameModalVisible(true);
   }
 
-  async function handleSendEmailCode() {
-    if (!newEmail.includes("@")) {
-      setEmailChangeError(t("error.invalidEmail"));
+  async function handleChangeUsername() {
+    setUsernameError("");
+    if (newUsername.trim().length < 3) {
+      setUsernameError(t("error.usernameLength"));
       return;
     }
-    setEmailChangeError("");
-    setSendingEmailCode(true);
-    try {
-      await sendEmailCode({ newEmail });
-      setEmailStep("code");
-    } catch (err) {
-      setEmailChangeError(err.response?.data?.detail || t("error.couldNotSendCode"));
-    } finally {
-      setSendingEmailCode(false);
+    if (!usernamePassword) {
+      setUsernameError(t("error.enterPassword"));
+      return;
     }
-  }
-
-  async function handleVerifyEmailCode() {
-    setEmailVerifyError("");
-    setVerifyingEmail(true);
+    setChangingUsername(true);
     try {
-      await changeEmail({ code: emailCode.trim(), newEmail });
-      setEmailStep("success");
-      await new Promise((r) => setTimeout(r, 1500));
-      setEmailModalVisible(false);
-      setNewEmail("");
-      setEmailCode("");
-      setUser((prev) => ({ ...prev, email: newEmail }));
+      await changeUsername({ newUsername: newUsername.trim(), password: usernamePassword });
+      setUsernameModalVisible(false);
+      setUser((prev) => ({ ...prev, username: newUsername.trim() }));
+      setNewUsername("");
+      setUsernamePassword("");
     } catch (err) {
-      if (err.response?.status === 400) {
-        setEmailVerifyError(err.response.data.detail || t("error.invalidCode"));
+      const detail = err.response?.data?.detail;
+      if (detail?.toLowerCase().includes("incorrect password")) {
+        setUsernameError(t("error.incorrectPassword"));
+      } else if (detail?.toLowerCase().includes("already exists")) {
+        setUsernameError(t("error.usernameTaken"));
       } else {
-        setEmailVerifyError(t("error.somethingWrong"));
+        setUsernameError(detail || t("error.somethingWrong"));
       }
     } finally {
-      setVerifyingEmail(false);
+      setChangingUsername(false);
     }
   }
 
@@ -501,14 +490,6 @@ export function SettingsScreen() {
               <View style={styles.rowInfo}>
                 <Text style={styles.rowValue}>{user?.username || "—"}</Text>
                 <Text style={styles.rowLabel}>{t("settings.username")}</Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.row}>
-                <Feather name="mail" size={22} color={colors.text.primary} />
-              <View style={styles.rowInfo}>
-                <Text style={styles.rowValue}>{user?.email || "—"}</Text>
-                <Text style={styles.rowLabel}>{t("settings.email")}</Text>
               </View>
             </View>
             <View style={styles.divider} />
@@ -594,11 +575,11 @@ export function SettingsScreen() {
               <Text style={styles.chipLabel}>{t("settings.changePassword")}</Text>
             </Pressable>
             <View style={styles.chipDivider} />
-            <Pressable style={styles.chip} onPress={handleOpenEmailModal}>
+            <Pressable style={styles.chip} onPress={handleOpenUsernameModal}>
               <View style={styles.chipIcon}>
-                <Feather name="mail" size={22} color={colors.text.primary} />
+                <Feather name="edit-3" size={22} color={colors.text.primary} />
               </View>
-              <Text style={styles.chipLabel}>{t("settings.changeEmail")}</Text>
+              <Text style={styles.chipLabel}>{t("settings.changeUsername")}</Text>
             </Pressable>
             <View style={styles.chipDivider} />
             <Pressable style={styles.chip} onPress={handleOpenDeleteModal}>
@@ -770,88 +751,78 @@ export function SettingsScreen() {
       </Modal>
 
       <Modal
-        visible={emailModalVisible}
+        visible={usernameModalVisible}
         transparent
         statusBarTranslucent={true}
         animationType="fade"
-        onRequestClose={() => setEmailModalVisible(false)}
+        onRequestClose={() => setUsernameModalVisible(false)}
       >
         <KeyboardAvoidingView
           style={styles.modalOverlay}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View style={styles.modalContent}>
-            <Pressable style={styles.closeButton} onPress={() => setEmailModalVisible(false)}>
+            <Pressable style={styles.closeButton} onPress={() => setUsernameModalVisible(false)}>
               <Text style={styles.closeButtonText}>✕</Text>
             </Pressable>
 
-            {emailStep === "input" ? (
-              <>
-                <Text style={styles.modalTitle}>{t("modal.changeEmail")}</Text>
-                <View style={styles.modalInputWrapper}>
-                  <TextInput
-                    style={styles.modalInput}
-                    placeholder={t("modal.newEmail")}
-                    placeholderTextColor={colors.text.muted}
-                    value={newEmail}
-                    onChangeText={(text) => {
-                      setNewEmail(text);
-                      if (emailChangeError) setEmailChangeError("");
-                    }}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                  />
-                </View>
-                {emailChangeError ? <Text style={styles.errorText}>{emailChangeError}</Text> : null}
-                <Pressable
-                  style={[styles.verifyButton, sendingEmailCode && styles.buttonDisabled]}
-                  onPress={handleSendEmailCode}
-                  disabled={sendingEmailCode || newEmail.length < 3}
-                >
-                  {sendingEmailCode ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.verifyButtonText}>{t("modal.sendCode")}</Text>
-                  )}
-                </Pressable>
-              </>
-            ) : emailStep === "code" ? (
-              <>
-                <Text style={styles.modalTitle}>{t("modal.confirmEmailChange")}</Text>
-                <Text style={styles.modalSubtitle}>
-                  {t("modal.weSentCode")}{"\n"}{newEmail}
-                </Text>
-                <TextInput
-                  style={styles.codeInput}
-                  placeholder={t("modal.enterCode")}
-                  placeholderTextColor={colors.text.muted}
-                  value={emailCode}
-                  onChangeText={(text) => {
-                    setEmailCode(text);
-                    if (emailVerifyError) setEmailVerifyError("");
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={6}
+            <Text style={styles.modalTitle}>{t("modal.changeUsername")}</Text>
+            <Text style={styles.modalSubtitle}>{t("modal.changeUsernameSubtitle")}</Text>
+
+            <View style={styles.modalInputWrapper}>
+              <TextInput
+                style={styles.modalInput}
+                placeholder={t("modal.newUsername")}
+                placeholderTextColor={colors.text.muted}
+                value={newUsername}
+                onChangeText={(text) => {
+                  setNewUsername(text);
+                  if (usernameError) setUsernameError("");
+                }}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.modalInputWrapper}>
+              <TextInput
+                style={styles.modalInput}
+                placeholder={t("modal.enterPassword")}
+                placeholderTextColor={colors.text.muted}
+                secureTextEntry={!showUsernamePassword}
+                value={usernamePassword}
+                onChangeText={(text) => {
+                  setUsernamePassword(text);
+                  if (usernameError) setUsernameError("");
+                }}
+                autoCapitalize="none"
+              />
+              <Pressable
+                style={styles.modalEyeButton}
+                onPressIn={() => setShowUsernamePassword(true)}
+                onPressOut={() => setShowUsernamePassword(false)}
+              >
+                <Feather
+                  name={showUsernamePassword ? "eye-off" : "eye"}
+                  size={22}
+                  color={colors.text.muted}
                 />
-                {emailVerifyError ? <Text style={styles.errorText}>{emailVerifyError}</Text> : null}
-                <Pressable
-                  style={[styles.verifyButton, verifyingEmail && styles.buttonDisabled]}
-                  onPress={handleVerifyEmailCode}
-                  disabled={verifyingEmail || emailCode.trim().length < 6}
-                >
-                  {verifyingEmail ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.verifyButtonText}>{t("modal.confirm")}</Text>
-                  )}
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Text style={styles.successIcon}>✓</Text>
-                <Text style={styles.successText}>{t("modal.emailChangedSuccess")}</Text>
-              </>
-            )}
+              </Pressable>
+            </View>
+
+            {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
+
+            <Pressable
+              style={[styles.verifyButton, changingUsername && styles.buttonDisabled]}
+              onPress={handleChangeUsername}
+              disabled={changingUsername || !newUsername.trim() || !usernamePassword}
+            >
+              {changingUsername ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.verifyButtonText}>{t("modal.save")}</Text>
+              )}
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </Modal>

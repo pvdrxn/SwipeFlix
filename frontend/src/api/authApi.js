@@ -1,9 +1,8 @@
 import { http } from "./http";
 
-export async function register({ username, email, password }) {
+export async function register({ username, password }) {
   const { data } = await http.post("/api/auth/register/", {
     username,
-    email,
     password,
   });
   return data;
@@ -20,38 +19,18 @@ export async function me() {
   return data;
 }
 
+export async function changeUsername({ newUsername, password }) {
+  const { data } = await http.post("/api/auth/change-username/", {
+    new_username: newUsername,
+    password,
+  });
+  return data;
+}
+
 export async function deleteAccount({ password }) {
   const { data } = await http.post("/api/auth/delete-account/", { password });
   return data;
 }
 
-export async function verifyEmail({ email, code }) {
-  const { data } = await http.post("/api/auth/verify-email/", { email, code });
-  return data;
-}
 
-export async function resendCode({ email }) {
-  const { data } = await http.post("/api/auth/resend-code/", { email });
-  return data;
-}
-
-export async function sendPasswordCode() {
-  const { data } = await http.post("/api/auth/send-password-code/");
-  return data;
-}
-
-export async function changePassword({ code, newPassword }) {
-  const { data } = await http.post("/api/auth/change-password/", { code, new_password: newPassword });
-  return data;
-}
-
-export async function sendEmailCode({ newEmail }) {
-  const { data } = await http.post("/api/auth/send-email-code/", { new_email: newEmail });
-  return data;
-}
-
-export async function changeEmail({ code, newEmail }) {
-  const { data } = await http.post("/api/auth/change-email/", { code, new_email: newEmail });
-  return data;
-}
 

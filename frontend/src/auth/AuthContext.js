@@ -37,19 +37,10 @@ export function AuthProvider({ children }) {
     setAccessToken(tokens.access);
   }, []);
 
-  const signUp = useCallback(async ({ username, email, password }) => {
-    await authApi.register({ username, email, password });
-  }, []);
-
-  const verifyEmail = useCallback(async ({ email, code }) => {
-    const tokens = await authApi.verifyEmail({ email, code });
+  const signUp = useCallback(async ({ username, password }) => {
+    const tokens = await authApi.register({ username, password });
     await setTokens({ accessToken: tokens.access, refreshToken: tokens.refresh });
     setAccessToken(tokens.access);
-  }, []);
-
-  const setAuthTokens = useCallback(async ({ accessToken: at, refreshToken: rt }) => {
-    await setTokens({ accessToken: at, refreshToken: rt });
-    setAccessToken(at);
   }, []);
 
   const signOut = useCallback(async () => {
@@ -64,11 +55,9 @@ export function AuthProvider({ children }) {
       accessToken,
       signIn,
       signUp,
-      verifyEmail,
-      setAuthTokens,
       signOut,
     }),
-    [isBootstrapping, accessToken, signIn, signUp, verifyEmail, setAuthTokens, signOut]
+    [isBootstrapping, accessToken, signIn, signUp, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
