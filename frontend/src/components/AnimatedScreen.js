@@ -1,6 +1,5 @@
-import { useEffect } from "react";
-import { View } from "react-native";
-import Animated, { useSharedValue, withTiming, useAnimatedStyle } from "react-native-reanimated";
+import { useEffect, useRef } from "react";
+import { Animated, View } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useTheme } from "../theme";
 
@@ -8,19 +7,21 @@ export function withFadeTransition(WrappedComponent) {
   return function AnimatedScreen(props) {
     const { colors } = useTheme();
     const isFocused = useIsFocused();
-    const opacity = useSharedValue(1);
+    const opacityRef = useRef(null);
+    if (opacityRef.current === null) opacityRef.current = new Animated.Value(1);
+    const opacity = opacityRef.current;
 
     useEffect(() => {
-      opacity.value = withTiming(isFocused ? 1 : 0, { duration: 200 });
-    }, [isFocused, opacity]);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-      opacity: opacity.value,
-    }));
+      Animated.timing(opacity, {
+        toValue: isFocused ? 1 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }, [isFocused]);
 
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg.primary }}>
-        <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+        <Animated.View style={[{ flex: 1 }, { opacity }]}>
           <WrappedComponent {...props} />
         </Animated.View>
       </View>

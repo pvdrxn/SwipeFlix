@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { AuthContext } from "../auth/AuthContext";
-import { me, deleteAccount, sendPasswordCode, changePassword, changeUsername } from "../api/authApi";
+import { me, deleteAccount, changeUsername } from "../api/authApi";
 import { clearLiked, clearDisliked, clearSaved, clearFavorites, clearAll } from "../api/picksApi";
 import { useTheme } from "../theme";
 import { LanguageContext } from "../context/LanguageContext";

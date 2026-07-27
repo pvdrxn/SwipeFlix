@@ -1,4 +1,4 @@
-package com.anonymous.swipeflix
+package com.swipeflix
 
 import android.app.Application
 import android.content.res.Configuration

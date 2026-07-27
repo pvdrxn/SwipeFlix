@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from "react";
-import { View, Text, Image, StyleSheet, Dimensions, Pressable, ScrollView, PanResponder, Modal } from "react-native";
+import { View, Text, Image, StyleSheet, Dimensions, Pressable, PanResponder, Modal } from "react-native";
 const LegacyAnimated = require("react-native").Animated;
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
