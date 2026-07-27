@@ -61,7 +61,7 @@ export function AuthScreen() {
 
     requestAnimationFrame(frame);
     return () => { running = false; };
-  }, [screenHeight]);
+  }, [screenHeight, scrollAnim]);
 
   const bgImageStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: scrollAnim.value }],

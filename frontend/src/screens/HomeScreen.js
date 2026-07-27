@@ -65,16 +65,16 @@ export function HomeScreen() {
     filterAnim.value = withTiming(expanding ? 100 : 0, { duration: 450 });
   };
 
-  const fetchWatched = async () => {
+  const fetchWatched = useCallback(async () => {
     try {
       const watched = await getWatchedPicks();
       setWatchedIds(new Set(watched.map(w => Number(w.tmdb_id))));
     } catch (err) {
       console.warn("Failed to fetch watched:", err.message);
     }
-  };
+  }, []);
 
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     try {
       const liked = await getPicks({ choice: "liked" });
       if (!liked || liked.length === 0) {
@@ -96,9 +96,9 @@ export function HomeScreen() {
       setRecommendedMovies([]);
       setRecommendedFromMovie(null);
     }
-  };
+  }, []);
 
-  const fetchAllCategories = async () => {
+  const fetchAllCategories = useCallback(async () => {
     try {
       const results = await Promise.all(
         CATEGORIES.map(async (category) => {
@@ -116,14 +116,14 @@ export function HomeScreen() {
       cancelAnimation(rotation);
       rotation.value = 0;
     }
-  };
+  }, [rotation]);
 
   useEffect(() => {
     fetchAllCategories();
     fetchWatched();
     fetchRecommendations();
     fetchGenres().then((data) => setGenres(data.genres || [])).catch(() => {});
-  }, [language]);
+  }, [language, fetchAllCategories, fetchWatched, fetchRecommendations]);
 
   useEffect(() => {
     const unsubWatched = subscribeWatched(fetchWatched);

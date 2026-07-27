@@ -38,22 +38,42 @@ export function PickScreen() {
   const queuedIdsRef = useRef(new Set());
   const moviesSnapshotRef = useRef([]);
   const expandedRef = useRef(false);
-  const synopsisOpacity = useRef(new LegacyAnimated.Value(0)).current;
-  
-  
-  
+  const synopsisOpacityRef = useRef(null);
+  if (synopsisOpacityRef.current === null) synopsisOpacityRef.current = new LegacyAnimated.Value(0);
+  const synopsisOpacity = synopsisOpacityRef.current;
 
-  const borderAnim = useRef(new LegacyAnimated.Value(0)).current;
-  const holdScale = useRef(new LegacyAnimated.Value(1)).current;
-  const pan = useRef(new LegacyAnimated.ValueXY()).current;
-  const starStamp = useRef({ opacity: new LegacyAnimated.Value(0), scale: new LegacyAnimated.Value(0) }).current;
+  const borderAnimRef = useRef(null);
+  if (borderAnimRef.current === null) borderAnimRef.current = new LegacyAnimated.Value(0);
+  const borderAnim = borderAnimRef.current;
+
+  const holdScaleRef = useRef(null);
+  if (holdScaleRef.current === null) holdScaleRef.current = new LegacyAnimated.Value(1);
+  const holdScale = holdScaleRef.current;
+
+  const panRef = useRef(null);
+  if (panRef.current === null) panRef.current = new LegacyAnimated.ValueXY();
+  const pan = panRef.current;
+
+  const starStampRef = useRef(null);
+  if (starStampRef.current === null) starStampRef.current = { opacity: new LegacyAnimated.Value(0), scale: new LegacyAnimated.Value(0) };
+  const starStamp = starStampRef.current;
+
   const isSwiping = useRef(false);
-  const rightOverlayOpacity = useRef(new LegacyAnimated.Value(0)).current;
-  const leftOverlayOpacity = useRef(new LegacyAnimated.Value(0)).current;
-  const upOverlayOpacity = useRef(new LegacyAnimated.Value(0)).current;
+  const rightOverlayOpacityRef = useRef(null);
+  if (rightOverlayOpacityRef.current === null) rightOverlayOpacityRef.current = new LegacyAnimated.Value(0);
+  const rightOverlayOpacity = rightOverlayOpacityRef.current;
 
-  const backCardScale = useRef(
-    LegacyAnimated.add(
+  const leftOverlayOpacityRef = useRef(null);
+  if (leftOverlayOpacityRef.current === null) leftOverlayOpacityRef.current = new LegacyAnimated.Value(0);
+  const leftOverlayOpacity = leftOverlayOpacityRef.current;
+
+  const upOverlayOpacityRef = useRef(null);
+  if (upOverlayOpacityRef.current === null) upOverlayOpacityRef.current = new LegacyAnimated.Value(0);
+  const upOverlayOpacity = upOverlayOpacityRef.current;
+
+  const backCardScaleRef = useRef(null);
+  if (backCardScaleRef.current === null) {
+    backCardScaleRef.current = LegacyAnimated.add(
       new LegacyAnimated.Value(0.85),
       LegacyAnimated.multiply(
         new LegacyAnimated.Value(0.15),
@@ -63,8 +83,9 @@ export function PickScreen() {
           extrapolate: "clamp",
         }),
       ),
-    )
-  ).current;
+    );
+  }
+  const backCardScale = backCardScaleRef.current;
 
   const loadMovies = async (reset = false, replace = false) => {
     if (!reset && !replace && loadingRef.current) return;
@@ -163,7 +184,7 @@ export function PickScreen() {
         }));
       });
     }
-  }, [language]);
+  }, [language, movies]);
 
   useEffect(() => {
     const unsub = subscribePicks(async () => {
@@ -188,11 +209,11 @@ export function PickScreen() {
         if (posterUrl) Image.prefetch(posterUrl);
       }
     }
-  }, [movies.length === 0]);
+  }, [movies]);
 
   useEffect(() => {
     if (cardIndex >= movies.length - 2 && !loading) {
-      loadMovies();
+      loadMoviesRef.current();
     }
     for (let i = 0; i < 3; i++) {
       const movie = movies[cardIndex + i];
@@ -217,7 +238,7 @@ export function PickScreen() {
         }
       }
     }
-  }, [cardIndex, movies.length, loading]);
+  }, [cardIndex, movies, loading]);
 
   useEffect(() => {
     pan.setValue({ x: 0, y: 0 });
@@ -232,7 +253,7 @@ export function PickScreen() {
       synopsisOpacity.setValue(0);
       expandedRef.current = false;
     }
-  }, [cardIndex]);
+  }, [cardIndex, pan, synopsisOpacity]);
 
   useEffect(() => {
     if (cardIndex >= movies.length && movies.length > 0) {
@@ -274,7 +295,7 @@ export function PickScreen() {
   const toggleSynopsis = useCallback(() => {
     const toValue = expandedRef.current ? 0 : 1;
     expandedRef.current = !expandedRef.current;
-    LegacyAnimated.spring(synopsisOpacity, {
+    LegacyAnimated.spring(synopsisOpacityRef.current, {
       toValue,
       useNativeDriver: true,
       damping: 12,
@@ -330,7 +351,7 @@ export function PickScreen() {
       cardIndexRef.current = idx + 1;
       setCardIndex(idx + 1);
     });
-  }, [toggleFavorite]);
+  }, [starStamp, borderAnim, holdScale, pan, rightOverlayOpacity, leftOverlayOpacity, upOverlayOpacity]);
 
   const finishSwipe = useCallback((direction) => {
     const targetX = direction === "right" ? SCREEN_WIDTH * 2 : -(SCREEN_WIDTH * 2);
@@ -363,10 +384,11 @@ export function PickScreen() {
         setCardIndex(nextIndex);
       }
     });
-  }, [handleSwiped, pan]);
+  }, [handleSwiped, pan, rightOverlayOpacity, leftOverlayOpacity, upOverlayOpacity, synopsisOpacity]);
 
-  const panResponder = useRef(
-    PanResponder.create({
+  const panResponderRef = useRef(null);
+  if (panResponderRef.current === null) {
+    panResponderRef.current = PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => !isSwiping.current && (Math.abs(g.dx) > 10 || g.dy < -10),
       onPanResponderGrant: () => {
         isSwiping.current = true;
@@ -424,8 +446,9 @@ export function PickScreen() {
           isSwiping.current = false;
         });
       },
-    })
-  ).current;
+    });
+  }
+  const panResponder = panResponderRef.current;
 
   const rightBorderOpacity = pan.x.interpolate({
     inputRange: [0, SWIPE_THRESHOLD * 0.5],
@@ -442,136 +465,6 @@ export function PickScreen() {
     outputRange: [0.8, 0],
     extrapolate: "clamp",
   });
-
-  const renderCard = useCallback((movie, isCurrent) => {
-    if (!movie) return null;
-
-    return (
-      <Pressable onPress={() => {
-        if (doubleTapRef.current) {
-          clearTimeout(doubleTapRef.current);
-          doubleTapRef.current = null;
-          handleDoubleTap();
-        } else {
-          doubleTapRef.current = setTimeout(() => {
-            doubleTapRef.current = null;
-            toggleSynopsis();
-          }, 300);
-        }
-      }} style={styles.card}>
-        <View style={{ flex: 1, borderRadius: 4, overflow: "hidden" }}>
-          {isCurrent && (
-            <>
-              <LegacyAnimated.View
-                pointerEvents="none"
-                style={{
-                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.save,
-                  opacity: rightBorderOpacity, zIndex: 10,
-                }}
-              />
-              <LegacyAnimated.View
-                pointerEvents="none"
-                style={{
-                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.pass,
-                  opacity: leftBorderOpacity, zIndex: 10,
-                }}
-              />
-              <LegacyAnimated.View
-                pointerEvents="none"
-                style={{
-                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.saved,
-                  opacity: upBorderOpacity, zIndex: 10,
-                }}
-              />
-              <LegacyAnimated.View
-                pointerEvents="none"
-                style={{
-                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-                  borderRadius: 4,
-                  borderWidth: 2,
-                  borderColor: colors.favorite,
-                  opacity: LegacyAnimated.multiply(borderAnim, 0.9),
-                  zIndex: 11,
-                }}
-              />
-              
-            </>
-          )}
-          {movie.poster_path ? (
-            <Image
-              source={{
-                uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
-              }}
-              style={styles.cardImage}
-            />
-          ) : (
-            <View style={[styles.cardImage, styles.cardPlaceholder]}>
-              <Text style={styles.placeholderText}>{t("pick.noImage")}</Text>
-            </View>
-          )}
-          <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.7)"]}
-            locations={[0, 0.12, 1]}
-            style={styles.cardInfo}
-          >
-            <View style={styles.infoGroup}>
-              <Text style={styles.cardTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.571}>
-                {movie.title}
-              </Text>
-              <Text style={styles.cardYear}>
-                {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` • ${runtimes[movie.id]} ${t("details.min")}` : ""}
-              </Text>
-              <View style={styles.cardGenres}>
-                {(movie.genre_ids || []).map(id => ({ id, name: genreMap[id] })).filter(g => g.name).map((g, i, arr) => (
-                  <React.Fragment key={g.id}>
-                    <Text style={{ color: colors.genreById[g.id] || colors.text.primary, fontSize: 16, fontWeight: "700" }}>
-                      {g.name}
-                    </Text>
-                    {i < arr.length - 1 && (
-                      <Text style={{ color: colors.text.primary, fontSize: 16 }}> · </Text>
-                    )}
-                  </React.Fragment>
-                ))}
-              </View>
-              {directors[movie.id] ? (
-                <Text style={styles.cardDirector}>Dir. {directors[movie.id]}</Text>
-              ) : null}
-            </View>
-            <View style={styles.cardRatingRow}>
-              <Ionicons name="star" size={22} color={colors.accent} />
-              <Text style={styles.cardRating}>
-                {(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : t("details.na")}
-              </Text>
-            </View>
-          </LinearGradient>
-          {isCurrent && (
-            <LegacyAnimated.View
-              pointerEvents="none"
-              style={{
-                position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-                borderRadius: 4,
-                backgroundColor: "rgba(0,0,0,0.65)",
-                justifyContent: "center",
-                alignItems: "center",
-                paddingHorizontal: 20,
-                opacity: synopsisOpacity,
-                zIndex: 20,
-              }}
-            >
-              <Text style={styles.synopsisText} numberOfLines={12} adjustsFontSizeToFit minimumFontScale={0.7}>
-                {movie.overview || "No synopsis available"}
-              </Text>
-            </LegacyAnimated.View>
-          )}
-        </View>
-      </Pressable>
-    );
-  }, [genreMap, directors, toggleSynopsis, colors]);
-
-  moviesSnapshotRef.current = movies;
 
   const styles = useMemo(() => StyleSheet.create({
   synopsisText: {
@@ -771,6 +664,136 @@ export function PickScreen() {
     marginVertical: 8,
   },
 }), [colors]);
+
+  const renderCard = useCallback((movie, isCurrent) => {
+    if (!movie) return null;
+
+    return (
+      <Pressable onPress={() => {
+        if (doubleTapRef.current) {
+          clearTimeout(doubleTapRef.current);
+          doubleTapRef.current = null;
+          handleDoubleTap();
+        } else {
+          doubleTapRef.current = setTimeout(() => {
+            doubleTapRef.current = null;
+            toggleSynopsis();
+          }, 300);
+        }
+      }} style={styles.card}>
+        <View style={{ flex: 1, borderRadius: 4, overflow: "hidden" }}>
+          {isCurrent && (
+            <>
+              <LegacyAnimated.View
+                pointerEvents="none"
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.save,
+                  opacity: rightBorderOpacity, zIndex: 10,
+                }}
+              />
+              <LegacyAnimated.View
+                pointerEvents="none"
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.pass,
+                  opacity: leftBorderOpacity, zIndex: 10,
+                }}
+              />
+              <LegacyAnimated.View
+                pointerEvents="none"
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  borderRadius: 4, borderWidth: 2, borderColor: colors.swipe.saved,
+                  opacity: upBorderOpacity, zIndex: 10,
+                }}
+              />
+              <LegacyAnimated.View
+                pointerEvents="none"
+                style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  borderRadius: 4,
+                  borderWidth: 2,
+                  borderColor: colors.favorite,
+                  opacity: LegacyAnimated.multiply(borderAnim, 0.9),
+                  zIndex: 11,
+                }}
+              />
+              
+            </>
+          )}
+          {movie.poster_path ? (
+            <Image
+              source={{
+                uri: `https://image.tmdb.org/t/p/original${movie.poster_path}`,
+              }}
+              style={styles.cardImage}
+            />
+          ) : (
+            <View style={[styles.cardImage, styles.cardPlaceholder]}>
+              <Text style={styles.placeholderText}>{t("pick.noImage")}</Text>
+            </View>
+          )}
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.7)"]}
+            locations={[0, 0.12, 1]}
+            style={styles.cardInfo}
+          >
+            <View style={styles.infoGroup}>
+              <Text style={styles.cardTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.571}>
+                {movie.title}
+              </Text>
+              <Text style={styles.cardYear}>
+                {movie.release_date?.slice(0, 4) || ""}{runtimes[movie.id] ? ` • ${runtimes[movie.id]} ${t("details.min")}` : ""}
+              </Text>
+              <View style={styles.cardGenres}>
+                {(movie.genre_ids || []).map(id => ({ id, name: genreMap[id] })).filter(g => g.name).map((g, i, arr) => (
+                  <React.Fragment key={g.id}>
+                    <Text style={{ color: colors.genreById[g.id] || colors.text.primary, fontSize: 16, fontWeight: "700" }}>
+                      {g.name}
+                    </Text>
+                    {i < arr.length - 1 && (
+                      <Text style={{ color: colors.text.primary, fontSize: 16 }}> · </Text>
+                    )}
+                  </React.Fragment>
+                ))}
+              </View>
+              {directors[movie.id] ? (
+                <Text style={styles.cardDirector}>Dir. {directors[movie.id]}</Text>
+              ) : null}
+            </View>
+            <View style={styles.cardRatingRow}>
+              <Ionicons name="star" size={22} color={colors.accent} />
+              <Text style={styles.cardRating}>
+                {(movie.vote_average != null) ? Number(movie.vote_average).toFixed(1) : t("details.na")}
+              </Text>
+            </View>
+          </LinearGradient>
+          {isCurrent && (
+            <LegacyAnimated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                borderRadius: 4,
+                backgroundColor: "rgba(0,0,0,0.65)",
+                justifyContent: "center",
+                alignItems: "center",
+                paddingHorizontal: 20,
+                opacity: synopsisOpacity,
+                zIndex: 20,
+              }}
+            >
+              <Text style={styles.synopsisText} numberOfLines={12} adjustsFontSizeToFit minimumFontScale={0.7}>
+                {movie.overview || "No synopsis available"}
+              </Text>
+            </LegacyAnimated.View>
+          )}
+        </View>
+      </Pressable>
+    );
+  }, [genreMap, directors, toggleSynopsis, colors, t, runtimes, rightBorderOpacity, leftBorderOpacity, upBorderOpacity, borderAnim, synopsisOpacity, styles, handleDoubleTap]);
+
+  moviesSnapshotRef.current = movies;
 
   if (loading && movies.length === 0) {
     return (

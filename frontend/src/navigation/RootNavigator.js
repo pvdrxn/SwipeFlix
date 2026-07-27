@@ -52,7 +52,7 @@ function TabItem({ route, isFocused, color, onPress }) {
   useEffect(() => {
     scaleAnim.value = withSpring(isFocused ? 1.2 : 1, { damping: 45, stiffness: 250 });
     translateY.value = withSpring(isFocused ? -6 : 0, { damping: 45, stiffness: 250 });
-  }, [isFocused]);
+  }, [isFocused, scaleAnim, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }, { scale: scaleAnim.value }],
@@ -113,7 +113,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
     indicatorPos.value = withSpring(center - 4, { damping: 45, stiffness: 250 });
 
     prevIndex.current = selectedIndex;
-  }, [selectedIndex, tabCount, barWidth]);
+  }, [selectedIndex, tabCount, barWidth, indicatorScale, indicatorPos]);
 
   const indicatorStyle = useAnimatedStyle(() => ({
     position: "absolute",
